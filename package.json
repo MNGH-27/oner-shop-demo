@@ -1,0 +1,27 @@
+{
+  "name": "oner-shop",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n STORE,ADMIN,API -c cyan,magenta,green \"npm run dev -w oner-ir\" \"npm run dev -w shop-admin-panel\" \"npm run start:dev -w shop-backend\"",
+    "dev:store": "npm run dev -w oner-ir",
+    "dev:admin": "npm run dev -w shop-admin-panel",
+    "dev:api": "npm run start:dev -w shop-backend",
+    "build": "npm run build --workspaces --if-present",
+    "build:store": "npm run build -w oner-ir",
+    "build:admin": "npm run build -w shop-admin-panel",
+    "build:api": "npm run build -w shop-backend",
+    "lint:store": "npm run lint -w oner-ir",
+    "lint:admin": "npm run lint -w shop-admin-panel",
+    "test:api": "npm run test -w shop-backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

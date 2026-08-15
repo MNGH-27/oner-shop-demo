@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Vazirmatn', Tahoma, sans-serif;
+  --color-bg: #f7f8f7;
+  --color-bg-soft: #f0f2f0;
+  --color-surface: #ffffff;
+  --color-ink: #292721;
+  --color-muted: #797367;
+  --color-line: #dde2dd;
+  --color-accent: #91a08b;
+  --color-accent-hover: #7f9078;
+  --color-danger: #b42318;
+  --color-danger-bg: #fef3f2;
+}
+
+@layer components {
+  .oner-mark {
+    @apply inline-flex min-w-16 items-center justify-center text-[1.35rem] font-black tracking-[-0.08em] text-ink;
+    direction: ltr;
+  }
+
+  .oner-mark span {
+    @apply mr-0.5 text-base text-[#a9bbc3];
+  }
+
+  .oner-mark-login {
+    @apply min-w-20 text-[1.75rem];
+  }
+
+  .login-shell {
+    background:
+      radial-gradient(circle at 85% 12%, rgb(145 160 139 / 18%), transparent 34%),
+      radial-gradient(circle at 12% 88%, rgb(218 202 176 / 22%), transparent 36%),
+      var(--color-bg);
+  }
+
+  .rich-editor { @apply overflow-hidden rounded-xl border border-line bg-white; }
+  .rich-editor .jodit-container { @apply border-0!; font-family: inherit!important; }
+  .rich-editor .jodit-toolbar__box { @apply border-0! border-b! border-line! bg-bg-soft!; }
+  .rich-editor .jodit-wysiwyg { @apply px-5! py-4! text-right! text-base! leading-8! text-ink!; font-family: inherit!important; direction: rtl; }
+}
+
+@layer base {
+  html {
+    @apply font-sans text-ink antialiased;
+  }
+
+  body {
+    @apply m-0 min-h-full bg-bg text-ink;
+    direction: rtl;
+  }
+
+  #root {
+    @apply min-h-full;
+  }
+
+  button,
+  input {
+    @apply font-sans;
+  }
+}

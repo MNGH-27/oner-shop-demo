@@ -1,100 +1,102 @@
 # Oner Shop
 
-مونوریپوی فروشگاه اینترنتی **Oner** شامل سایت مشتریان، پنل مدیریت و API مرکزی فروشگاه است. هر سه برنامه در یک مخزن و با استفاده از **npm workspaces** نگهداری می‌شوند تا توسعه، نصب وابستگی‌ها و استقرار هماهنگ‌تر باشد.
+**Oner Shop** is an e-commerce monorepo containing the customer storefront, administration panel, and central API. All three applications are maintained in one repository using **npm workspaces**, providing a consistent workflow for dependency management, development, builds, and deployment.
 
-## ساختار مونوریپو
+## Monorepo Structure
 
 ```text
 oner-shop/
 ├── apps/
-│   ├── oner-ir/              # سایت اصلی فروشگاه
-│   ├── shop-admin-panel/     # پنل مدیریت
-│   └── shop-backend/         # API و منطق کسب‌وکار
-├── package.json              # اسکریپت‌ها و Workspaces اصلی
-├── render.yaml               # تنظیمات استقرار آزمایشی API
-└── DEPLOYMENT.md             # راهنمای استقرار
+│   ├── oner-ir/              # Customer-facing storefront
+│   ├── shop-admin-panel/     # Administration panel
+│   └── shop-backend/         # API and business logic
+├── package.json              # Root scripts and workspaces
+├── render.yaml               # Demo API deployment configuration
+└── DEPLOYMENT.md             # Deployment guide
 ```
 
-### برنامه‌ها
+### Applications
 
-- **فروشگاه Oner** در `apps/oner-ir` با Next.js، React و TypeScript
-- **پنل مدیریت** در `apps/shop-admin-panel` با React، Vite، Tailwind CSS و TypeScript
-- **بک‌اند** در `apps/shop-backend` با NestJS، Prisma و PostgreSQL
+- **Oner Storefront** — `apps/oner-ir`, built with Next.js, React, and TypeScript
+- **Admin Panel** — `apps/shop-admin-panel`, built with React, Vite, Tailwind CSS, and TypeScript
+- **Backend API** — `apps/shop-backend`, built with NestJS, Prisma, and PostgreSQL
 
-## قابلیت‌های فروشگاه
+## Storefront Features
 
-- صفحه اصلی واکنش‌گرا با بنرهای قابل مدیریت
-- نمایش دسته‌بندی‌های تو‌در‌تو در منوی سایت
-- فهرست، جستجو و فیلتر محصولات بر اساس دسته‌بندی، موجودی و محدوده قیمت
-- صفحه جزئیات محصول با گالری تصاویر، توضیحات کامل و محصولات مرتبط
-- انتخاب رنگ و سایز با موجودی مستقل برای هر ترکیب
-- محاسبه تخفیف کالا و نمایش قیمت نهایی
-- مشاهده سریع محصول
-- سبد خرید با کنترل حداکثر موجودی هر تنوع
-- اعمال کد تخفیف با حداقل خرید، تاریخ انقضا و سقف مبلغ تخفیف
-- ثبت‌نام، ورود و بخش پروفایل مشتری
-- صفحه تماس با ما برای درخواست محصولات ناموجود یا سفارشی
+- Responsive homepage with admin-managed banners
+- Nested category navigation
+- Product listing, search, and filtering by category, availability, and price range
+- Product detail pages with image galleries, rich descriptions, and related products
+- Color and size selection with independent inventory for each variant
+- Product discounts and final-price calculation
+- Quick product preview
+- Shopping cart with variant-level stock limits
+- Coupon codes with minimum purchase, expiration date, and maximum discount amount
+- Customer registration, authentication, and profile area
+- Contact page for custom or unavailable-product requests
 
-## قابلیت‌های پنل مدیریت
+## Admin Panel Features
 
-- ورود مدیر و محافظت از مسیرهای پنل با JWT
-- داشبورد مدیریتی فارسی و واکنش‌گرا
-- مدیریت محصولات، تصاویر، قیمت، تخفیف و وضعیت نمایش
-- تعریف رنگ‌ها و سایزها و تعیین موجودی هر ترکیب
-- تعیین آستانه موجودی کم برای محصولات و تنوع‌ها
-- مدیریت توضیحات غنی محصول و محصولات مرتبط
-- مدیریت دسته‌بندی‌های والد و فرزند
-- مدیریت سفارش‌ها و تغییر وضعیت سفارش، حتی پس از تحویل
-- مدیریت کاربران و مشاهده سفارش‌های هر کاربر
-- مدیریت بنرهای سایت
-- مدیریت کدهای تخفیف و تاریخ انقضای شمسی
-- نمایش پیام موفقیت یا خطا با Toast و نمایش خطاهای اعتبارسنجی زیر فیلدها
+- Secure admin authentication and JWT-protected routes
+- Responsive Persian administration dashboard
+- Product, image, price, discount, and visibility management
+- Custom color and size definitions with inventory per combination
+- Low-stock alert thresholds for products and variants
+- Rich product descriptions and related-product management
+- Nested parent and child category management
+- Order management and status changes, including delivered orders
+- User management with access to each customer's orders
+- Storefront banner management
+- Coupon management with Persian date selection
+- Toast notifications for successful operations and field-level validation errors
 
-## قابلیت‌های بک‌اند
+## Backend Features
 
-- REST API مبتنی بر NestJS
-- پایگاه داده PostgreSQL و ORM مبتنی بر Prisma
-- احراز هویت JWT و سطح دسترسی مدیر و مشتری
-- اعتبارسنجی ورودی‌ها با `class-validator`
-- مدیریت موجودی مستقل برای ترکیب رنگ و سایز
-- جلوگیری از ثبت تعداد بیشتر از موجودی در سبد و سفارش
-- Seed اولیه شامل مدیر، مشتری، دسته‌بندی، محصول، بنر و کد تخفیف آزمایشی
-- سرو فایل‌های آپلودشده از مسیر `/uploads`
-- اعلان تلگرام برای رسیدن موجودی به آستانه تعیین‌شده
-- مستندات Swagger در مسیر `/api/docs`
-- تنظیم CORS برای اتصال سایت و پنل مدیریت
+- REST API powered by NestJS
+- PostgreSQL database with Prisma ORM
+- JWT authentication with admin and customer roles
+- Request validation using `class-validator`
+- Independent inventory tracking for each color and size combination
+- Stock validation for cart and order quantities
+- Demo seed data including an administrator, customers, categories, products, banners, and coupons
+- Uploaded file delivery through `/uploads`
+- Telegram notifications when inventory reaches a configured threshold
+- Swagger documentation at `/api/docs`
+- Configurable CORS for the storefront and admin panel
 
-## پیش‌نیازها
+## Requirements
 
-- Node.js نسخه 22 یا 24
+- Node.js 22 or 24
 - npm
-- Docker یا Podman برای اجرای PostgreSQL محلی
+- Docker or Podman for local PostgreSQL
 
-## راه‌اندازی محلی
+## Local Development
 
-### ۱. نصب وابستگی‌ها
+### 1. Install Dependencies
 
-تمام وابستگی‌های سه برنامه از ریشه مونوریپو نصب می‌شوند:
+Install all workspace dependencies from the repository root:
 
 ```bash
 npm install
 ```
 
-### ۲. اجرای PostgreSQL
+### 2. Start PostgreSQL
+
+Using Docker:
 
 ```bash
 docker compose -f apps/shop-backend/docker-compose.yml up -d
 ```
 
-در صورت استفاده از Podman:
+Using Podman:
 
 ```bash
 podman compose -f apps/shop-backend/docker-compose.yml up -d
 ```
 
-### ۳. تنظیم متغیرهای محیطی
+### 3. Configure Environment Variables
 
-فایل‌های نمونه را کپی کنید:
+Copy the example files:
 
 ```bash
 cp apps/shop-backend/.env.example apps/shop-backend/.env
@@ -102,34 +104,34 @@ cp apps/oner-ir/.env.example apps/oner-ir/.env.local
 cp apps/shop-admin-panel/.env.example apps/shop-admin-panel/.env
 ```
 
-مهم‌ترین متغیر بک‌اند:
+The primary backend database variable is:
 
 ```env
 DATABASE_URL=postgresql://oner:YOUR_PASSWORD@127.0.0.1:5432/oner_shop?schema=public
 ```
 
-فایل‌های واقعی `.env` نباید در Git ثبت شوند.
+Real `.env` files must never be committed to Git.
 
-### ۴. ساخت جداول پایگاه داده
+### 4. Create the Database Tables
 
 ```bash
 npm run db:migrate -w shop-backend
 ```
 
-### ۵. اجرای هم‌زمان برنامه‌ها
+### 5. Start All Applications
 
 ```bash
 npm run dev
 ```
 
-پس از اجرا:
+The applications will be available at:
 
-- فروشگاه: `http://localhost:3000`
-- پنل مدیریت: `http://localhost:5173`
+- Storefront: `http://localhost:3000`
+- Admin panel: `http://localhost:5173`
 - API: `http://localhost:5000/api`
 - Swagger: `http://localhost:5000/api/docs`
 
-## اجرای جداگانه برنامه‌ها
+## Starting Applications Individually
 
 ```bash
 npm run dev:store
@@ -137,41 +139,41 @@ npm run dev:admin
 npm run dev:api
 ```
 
-## دستورات کاربردی
+## Useful Commands
 
 ```bash
-# بیلد هر سه برنامه
+# Build all applications
 npm run build
 
-# بیلد جداگانه
+# Build individual applications
 npm run build:store
 npm run build:admin
 npm run build:api
 
-# اجرای Prisma Studio
+# Open Prisma Studio
 npm run db:studio -w shop-backend
 
-# اعمال Migration در محیط استقرار
+# Apply migrations in a deployment environment
 npm run db:deploy -w shop-backend
 
-# تست‌های بک‌اند
+# Run backend tests
 npm run test:api
 ```
 
-## ذخیره‌سازی اطلاعات
+## Data Storage
 
-PostgreSQL می‌تواند در نسخه نهایی روی همان سرور برنامه اجرا شود. فایل Docker Compose یک Volume دائمی برای دیتابیس ایجاد می‌کند تا با بازسازی کانتینر داده‌ها حذف نشوند. برای محیط واقعی باید علاوه بر Volume، بکاپ زمان‌بندی‌شده با `pg_dump` نیز تنظیم شود.
+PostgreSQL can run alongside the applications on the same production server. The provided Docker Compose configuration creates a persistent database volume, ensuring data survives container recreation. A production environment should also include scheduled `pg_dump` backups in addition to persistent storage.
 
-تصاویر محصولات نیز در محیط توسعه داخل `apps/shop-backend/uploads` نگهداری می‌شوند. برای استقرار نهایی باید این پوشه روی فضای دائمی سرور Mount شود یا به Object Storage منتقل شود.
+During development, product images are stored in `apps/shop-backend/uploads`. In production, this directory must be mounted to persistent server storage or replaced with an object-storage service.
 
-## استقرار آزمایشی
+## Demo Deployment
 
-راهنمای استقرار فروشگاه و پنل روی Vercel و API روی Render در فایل [DEPLOYMENT.md](./DEPLOYMENT.md) قرار دارد. این تنظیمات برای نمایش نسخه دمو هستند و جایگزین معماری و بکاپ نسخه Production نیستند.
+Instructions for deploying the storefront and admin panel to Vercel and the API to Render are available in [DEPLOYMENT.md](./DEPLOYMENT.md). These settings are intended for customer demonstrations and are not a replacement for a production architecture and backup strategy.
 
-## نکات امنیتی
+## Security Notes
 
-- رمز دیتابیس، `JWT_SECRET` و توکن تلگرام را فقط در Environment Variables نگهداری کنید.
-- توکن یا رمز واقعی را داخل `.env.example` یا Git قرار ندهید.
-- رمز پیش‌فرض مدیر را پیش از استقرار تغییر دهید.
-- دسترسی PostgreSQL را به شبکه عمومی باز نگذارید.
-- برای نسخه واقعی HTTPS، محدودسازی CORS و بکاپ منظم الزامی است.
+- Store the database password, `JWT_SECRET`, and Telegram token only in environment variables.
+- Never place real credentials in `.env.example` files or Git.
+- Change the default administrator password before deployment.
+- Do not expose PostgreSQL directly to the public network.
+- HTTPS, restricted CORS, and regular backups are required in production.

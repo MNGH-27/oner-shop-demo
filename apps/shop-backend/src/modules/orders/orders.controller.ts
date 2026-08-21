@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import {
@@ -34,7 +34,7 @@ class OrderQueryDto extends PaginationDto {
   paymentStatus?: PaymentStatus;
 
   @IsOptional()
-  @IsMongoId()
+  @IsUUID()
   userId?: string;
 
   @IsOptional()

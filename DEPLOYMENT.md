@@ -8,13 +8,13 @@
 
 ## ۱. پایگاه داده
 
-در MongoDB Atlas یک کلاستر رایگان بسازید و رشته اتصال را با نام `MONGODB_URI` نگه دارید. رمز پایگاه داده را داخل گیت قرار ندهید.
+پروژه از PostgreSQL استفاده می‌کند. در نسخه دمو یک PostgreSQL قابل دسترس بسازید و رشته اتصال را با نام `DATABASE_URL` تنظیم کنید. در سرور نهایی می‌توان PostgreSQL را با فایل `apps/shop-backend/docker-compose.yml` و Volume دائمی روی همان سرور اجرا کرد.
 
 ## ۲. بک‌اند در Render
 
 در Render گزینه Blueprint را انتخاب و همین مخزن را متصل کنید. فایل `render.yaml` سرویس را می‌سازد. هنگام ساخت، متغیرهای زیر را وارد کنید:
 
-- `MONGODB_URI`: رشته اتصال Atlas
+- `DATABASE_URL`: رشته اتصال PostgreSQL
 - `ADMIN_EMAIL`: ایمیل ورود مدیر
 - `ADMIN_PASSWORD`: رمز قوی مدیر
 - `ADMIN_PANEL_URL`: آدرس نهایی پنل در Vercel

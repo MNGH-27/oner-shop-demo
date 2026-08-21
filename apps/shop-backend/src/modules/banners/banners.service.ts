@@ -1,14 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { PrismaService } from '../../database/prisma.service';
+import { apiEntity } from '../../common/utils/api-entity';
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
-import { Banner, BannerDocument } from './schemas/banner.schema';
 @Injectable()
 export class BannersService {
-  constructor(@InjectModel(Banner.name) private readonly model: Model<BannerDocument>) {}
-  findAll(onlyActive = false) { return this.model.find(onlyActive ? { isActive: true } : {}).select('-link').sort({ createdAt: -1 }).exec(); }
-  create(dto: CreateBannerDto) { return this.model.create(dto); }
-  async update(id: string, dto: UpdateBannerDto) { const item = await this.model.findByIdAndUpdate(id, dto, { new: true }).select('-link').exec(); if (!item) throw new NotFoundException('بنر پیدا نشد'); return item; }
-  async remove(id: string) { const item = await this.model.findByIdAndDelete(id).exec(); if (!item) throw new NotFoundException('بنر پیدا نشد'); }
+  constructor(private readonly prisma: PrismaService) {}
+  async findAll(onlyActive = false) { return (await this.prisma.banner.findMany({ where: onlyActive ? { isActive: true } : {}, orderBy: { createdAt: 'desc' } })).map(apiEntity); }
+  async create(dto: CreateBannerDto) { return apiEntity(await this.prisma.banner.create({ data: dto })); }
+  async update(id: string, dto: UpdateBannerDto) { const exists = await this.prisma.banner.findUnique({ where: { id } }); if (!exists) throw new NotFoundException('بنر پیدا نشد'); return apiEntity(await this.prisma.banner.update({ where: { id }, data: dto })); }
+  async remove(id: string) { try { await this.prisma.banner.delete({ where: { id } }); } catch { throw new NotFoundException('بنر پیدا نشد'); } }
 }

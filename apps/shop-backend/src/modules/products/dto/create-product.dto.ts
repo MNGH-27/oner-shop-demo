@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsMongoId,
+  IsUUID,
   IsNumber,
   IsObject,
   IsOptional,
@@ -14,7 +14,7 @@ import {
   ValidateNested,
   IsEnum,
 } from 'class-validator';
-import { ProductSizeType } from '../schemas/product.schema';
+import { ProductSizeType } from '../product.types';
 
 export class ProductColorDto {
   @IsString()
@@ -79,7 +79,7 @@ export class CreateProductDto {
   @IsString({ each: true })
   images?: string[];
 
-  @IsMongoId()
+  @IsUUID()
   category: string;
 
   /** Optional on create — use PATCH /:id/stock to set later */
@@ -123,6 +123,6 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsArray()
-  @IsMongoId({ each: true })
+  @IsUUID(undefined, { each: true })
   relatedProducts?: string[];
 }

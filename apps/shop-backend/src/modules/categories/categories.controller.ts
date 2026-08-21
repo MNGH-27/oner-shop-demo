@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { UserRole } from '../../common/enums/role.enum';
@@ -32,7 +32,7 @@ class CategoryQueryDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
-  @IsMongoId()
+  @IsUUID()
   parent?: string;
 }
 

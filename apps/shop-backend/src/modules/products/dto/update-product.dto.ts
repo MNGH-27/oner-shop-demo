@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsMongoId,
+  IsUUID,
   IsNumber,
   IsObject,
   IsOptional,
@@ -18,7 +18,7 @@ import {
   ProductColorDto,
   ProductSizeDto,
 } from './create-product.dto';
-import { ProductSizeType } from '../schemas/product.schema';
+import { ProductSizeType } from '../product.types';
 
 /** General product update — price & stock have dedicated routes */
 export class UpdateProductDto {
@@ -41,7 +41,7 @@ export class UpdateProductDto {
   images?: string[];
 
   @IsOptional()
-  @IsMongoId()
+  @IsUUID()
   category?: string;
 
   @IsOptional()
@@ -91,6 +91,6 @@ export class UpdateProductDto {
 
   @IsOptional()
   @IsArray()
-  @IsMongoId({ each: true })
+  @IsUUID(undefined, { each: true })
   relatedProducts?: string[];
 }

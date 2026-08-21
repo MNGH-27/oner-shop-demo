@@ -1,12 +1,20 @@
 services:
-  mongo:
-    image: mongo:7
-    container_name: shop-mongo
-    ports:
-      - '27017:27017'
-    volumes:
-      - shop_mongo_data:/data/db
+  postgres:
+    image: postgres:17-alpine
+    container_name: oner-postgres
     restart: unless-stopped
-
+    environment:
+      POSTGRES_DB: oner_shop
+      POSTGRES_USER: oner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
+    ports:
+      - "5432:5432"
+    volumes:
+      - oner_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oner -d oner_shop"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 volumes:
-  shop_mongo_data:
+  oner_postgres_data:

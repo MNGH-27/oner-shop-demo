@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { AuthModule } from './modules/auth/auth.module';
 import { BannersModule } from './modules/banners/banners.module';
@@ -14,6 +13,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { TelegramModule } from './modules/telegram/telegram.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
+import { PrismaModule } from './database/prisma.module';
 
 @Module({
   imports: [
@@ -21,12 +21,7 @@ import { UsersModule } from './modules/users/users.module';
       isGlobal: true,
       load: [configuration],
     }),
-    MongooseModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.getOrThrow<string>('mongodbUri'),
-      }),
-    }),
+    PrismaModule,
     TelegramModule,
     UsersModule,
     AuthModule,

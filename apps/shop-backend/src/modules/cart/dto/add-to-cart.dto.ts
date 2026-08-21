@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsMongoId, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class AddToCartDto {
-  @IsMongoId()
+  @IsUUID()
   productId: string;
 
   @Type(() => Number)

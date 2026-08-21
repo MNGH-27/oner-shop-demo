@@ -1,2 +1,5 @@
-import { Module } from '@nestjs/common'; import { MongooseModule } from '@nestjs/mongoose'; import { CouponsController, CatalogCouponsController } from './coupons.controller'; import { CouponsService } from './coupons.service'; import { Coupon, CouponSchema } from './schemas/coupon.schema';
-@Module({imports:[MongooseModule.forFeature([{name:Coupon.name,schema:CouponSchema}])],controllers:[CouponsController,CatalogCouponsController],providers:[CouponsService]}) export class CouponsModule {}
+import { Module } from '@nestjs/common';
+import { CouponsController, CatalogCouponsController } from './coupons.controller';
+import { CouponsService } from './coupons.service';
+@Module({ controllers: [CouponsController, CatalogCouponsController], providers: [CouponsService] })
+export class CouponsModule {}

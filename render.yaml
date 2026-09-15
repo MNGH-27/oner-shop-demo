@@ -14,14 +14,40 @@ services:
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 7d
+      - key: SMS_PROVIDER
+        value: smsir
+      - key: SMSIR_API_KEY
+        sync: false
+      - key: SMSIR_TEMPLATE_ID
+        sync: false
+      - key: SMSIR_CODE_PARAMETER
+        value: Code
+      - key: OTP_PEPPER
+        generateValue: true
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      - key: ADMIN_PHONE
+        sync: false
+      - key: SEED_ADMIN
+        value: true
+      - key: SEED_DEMO
+        value: false
       - key: ADMIN_PANEL_URL
         sync: false
       - key: CORS_ORIGINS
         sync: false
+      - key: PAYMENT_PROVIDER
+        value: zarinpal
+      - key: PAYMENT_CALLBACK_BASE_URL
+        sync: false
+      - key: STOREFRONT_URL
+        sync: false
+      - key: ZARINPAL_MERCHANT_ID
+        sync: false
+      - key: ZARINPAL_SANDBOX
+        value: false
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_CHAT_ID

@@ -144,7 +144,7 @@ export function OrdersPage() {
       {ordersQuery.data && ordersQuery.data.items.length === 0 ? (
         <EmptyState
           title="سفارشی ثبت نشده"
-          description="سفارش‌ها بعد از پرداخت موفق از سایت فروشگاه ثبت می‌شوند."
+          description="سفارش‌های ثبت‌شده مشتریان در این بخش نمایش داده می‌شوند."
         />
       ) : null}
 

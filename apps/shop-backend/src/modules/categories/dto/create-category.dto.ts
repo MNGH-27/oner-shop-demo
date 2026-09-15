@@ -3,6 +3,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Min,
   MinLength,
 } from 'class-validator';
@@ -22,7 +23,7 @@ export class CreateCategoryDto {
   image?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   parent?: string;
 
   @IsOptional()

@@ -29,4 +29,4 @@ export type OrderStatus =
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
-export type PaymentMethod = 'cash_on_delivery' | 'online' | 'card'
+export type PaymentMethod = 'online'

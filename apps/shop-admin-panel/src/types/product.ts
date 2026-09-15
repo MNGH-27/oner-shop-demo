@@ -62,6 +62,7 @@ export interface CreateProductPayload {
   isActive?: boolean
   attributes?: Record<string, string | number | boolean>
   relatedProducts?: string[]
+  variants?: ProductVariant[]
 }
 
 export interface UpdateProductPayload {
@@ -79,6 +80,8 @@ export interface UpdateProductPayload {
   isActive?: boolean
   attributes?: Record<string, string | number | boolean>
   relatedProducts?: string[]
+  stock?: number
+  variants?: ProductVariant[]
 }
 
 export interface UpdateProductPricePayload {

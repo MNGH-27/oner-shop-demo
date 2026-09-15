@@ -4,19 +4,21 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { UserRole } from '../../common/enums/role.enum';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { parseBooleanQuery } from '../../common/transforms/query.transform';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductPriceDto } from './dto/update-product-price.dto';
 import {
@@ -36,7 +38,7 @@ class ProductQueryDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(parseBooleanQuery)
   @IsBoolean()
   onlyActive?: boolean;
 }
@@ -65,40 +67,52 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.findById(id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update product info (not price/stock)' })
-  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProductDto,
+  ) {
     return this.productsService.update(id, dto);
   }
 
   @Patch(':id/price')
   @ApiOperation({ summary: 'Set product price' })
-  updatePrice(@Param('id') id: string, @Body() dto: UpdateProductPriceDto) {
+  updatePrice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProductPriceDto,
+  ) {
     return this.productsService.updatePrice(id, dto.price);
   }
 
   @Patch(':id/stock')
-  @ApiOperation({ summary: 'Set absolute stock quantity and optional alert threshold' })
-  setStock(@Param('id') id: string, @Body() dto: SetProductStockDto) {
-    return this.productsService.setStock(
-      id,
-      dto.stock,
-      dto.lowStockThreshold,
-    );
+  @ApiOperation({
+    summary: 'Set absolute stock quantity and optional alert threshold',
+  })
+  setStock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetProductStockDto,
+  ) {
+    return this.productsService.setStock(id, dto.stock, dto.lowStockThreshold);
   }
 
   @Patch(':id/variants')
-  @ApiOperation({ summary: 'Set stock and alert threshold for color/size variants' })
-  setVariants(@Param('id') id: string, @Body() dto: SetProductVariantsDto) {
+  @ApiOperation({
+    summary: 'Set stock and alert threshold for color/size variants',
+  })
+  setVariants(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetProductVariantsDto,
+  ) {
     return this.productsService.setVariants(id, dto.variants);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.remove(id);
   }
 }

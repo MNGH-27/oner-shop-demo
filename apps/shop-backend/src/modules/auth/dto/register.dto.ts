@@ -1,4 +1,10 @@
-import { IsEmail, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 
 export class RegisterDto {
   /** اختیاری — اگر خالی باشد از شماره همراه ساخته می‌شود */

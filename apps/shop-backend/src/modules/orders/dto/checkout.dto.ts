@@ -1,49 +1,24 @@
 import { Type } from 'class-transformer';
 import {
-  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
+  MaxLength,
   Min,
-  MinLength,
   ValidateNested,
 } from 'class-validator';
-import { PaymentMethod } from '../../../common/enums/order.enum';
-
-export class ShippingAddressDto {
-  @IsString()
-  @MinLength(2)
-  fullName: string;
-
-  @IsString()
-  @MinLength(8)
-  phone: string;
-
-  @IsString()
-  @MinLength(2)
-  province: string;
-
-  @IsString()
-  @MinLength(2)
-  city: string;
-
-  @IsString()
-  @MinLength(5)
-  addressLine: string;
-
-  @IsOptional()
-  @IsString()
-  postalCode?: string;
-}
+import { CreateAddressDto } from '../../addresses/dto/address.dto';
 
 export class CheckoutDto {
-  @ValidateNested()
-  @Type(() => ShippingAddressDto)
-  shippingAddress: ShippingAddressDto;
+  @IsOptional()
+  @IsUUID()
+  addressId?: string;
 
   @IsOptional()
-  @IsEnum(PaymentMethod)
-  paymentMethod?: PaymentMethod;
+  @ValidateNested()
+  @Type(() => CreateAddressDto)
+  shippingAddress?: CreateAddressDto;
 
   @IsOptional()
   @Type(() => Number)
@@ -53,5 +28,11 @@ export class CheckoutDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  couponCode?: string;
 }

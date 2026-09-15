@@ -3,13 +3,22 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ApiError } from '../api/client'
-import { fetchOrder, updateOrderStatus } from '../api/orders'
+import {
+  fetchOrder,
+  updateOrderPaymentStatus,
+  updateOrderStatus,
+} from '../api/orders'
 import { mediaUrl } from '../api/uploads'
 import { Alert, Badge, PageHeader, Spinner, TableShell } from '../components/ui/Page'
 import { Button } from '../components/ui/Button'
 import { Field, Select, Textarea } from '../components/ui/Field'
-import { formatDate, formatPrice, orderStatusLabels } from '../lib/labels'
-import type { OrderStatus } from '../types/common'
+import {
+  formatDate,
+  formatPrice,
+  orderStatusLabels,
+  paymentStatusLabels,
+} from '../lib/labels'
+import type { OrderStatus, PaymentStatus } from '../types/common'
 import { orderStatusSchema, validationErrors, type FieldErrors } from '../lib/validation'
 
 function statusTone(status: OrderStatus) {
@@ -19,11 +28,28 @@ function statusTone(status: OrderStatus) {
   return 'info' as const
 }
 
+const nextOrderStatuses: Record<OrderStatus, OrderStatus[]> = {
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['processing', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped: ['delivered'],
+  delivered: [],
+  cancelled: [],
+}
+
+const nextPaymentStatuses: Record<PaymentStatus, PaymentStatus[]> = {
+  pending: ['paid', 'failed'],
+  paid: ['refunded'],
+  failed: ['pending', 'paid'],
+  refunded: [],
+}
+
 export function OrderDetailPage() {
   const { id = '' } = useParams()
   const queryClient = useQueryClient()
   const [status, setStatus] = useState<OrderStatus | ''>('')
   const [notes, setNotes] = useState('')
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | ''>('')
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
@@ -53,6 +79,29 @@ export function OrderDetailPage() {
     onError: (err) => {
       const message =
         err instanceof ApiError ? err.message : 'خطا در بروزرسانی وضعیت'
+      setError(message)
+      toast.error(message)
+    },
+  })
+
+  const paymentMutation = useMutation({
+    mutationFn: () =>
+      updateOrderPaymentStatus(id, {
+        paymentStatus: paymentStatus as PaymentStatus,
+      }),
+    onSuccess: async () => {
+      setPaymentStatus('')
+      setError(null)
+      toast.success('وضعیت پرداخت بروزرسانی شد')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['order', id] }),
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['orders-stats'] }),
+      ])
+    },
+    onError: (err) => {
+      const message =
+        err instanceof ApiError ? err.message : 'خطا در بروزرسانی پرداخت'
       setError(message)
       toast.error(message)
     },
@@ -89,8 +138,14 @@ export function OrderDetailPage() {
           phone: order.user.phone ?? '',
         }
 
-  const locked = order.status === 'cancelled'
-  const isDelivered = order.status === 'delivered'
+  const allowedStatuses = nextOrderStatuses[order.status]
+  const allowedPaymentStatuses: PaymentStatus[] =
+    order.status === 'cancelled'
+      ? order.paymentStatus === 'paid'
+        ? ['refunded']
+        : []
+      : nextPaymentStatuses[order.paymentStatus]
+  const locked = allowedStatuses.length === 0
 
   return (
     <div className="max-w-5xl">
@@ -108,6 +163,9 @@ export function OrderDetailPage() {
       <div className="mb-5 flex flex-wrap gap-2">
         <Badge tone={statusTone(order.status)}>
           {orderStatusLabels[order.status]}
+        </Badge>
+        <Badge tone={order.paymentStatus === 'paid' ? 'success' : 'warning'}>
+          {paymentStatusLabels[order.paymentStatus]}
         </Badge>
       </div>
 
@@ -165,6 +223,12 @@ export function OrderDetailPage() {
               <dt className="text-muted">هزینه ارسال</dt>
               <dd className="m-0">{formatPrice(order.shippingCost)}</dd>
             </div>
+            {order.couponDiscount ? (
+              <div className="flex justify-between gap-3 text-success">
+                <dt>تخفیف {order.couponCode ?? ''}</dt>
+                <dd className="m-0">− {formatPrice(order.couponDiscount)}</dd>
+              </div>
+            ) : null}
             <div className="flex justify-between gap-3 border-t border-line pt-2">
               <dt className="font-semibold">جمع کل</dt>
               <dd className="m-0 font-bold">{formatPrice(order.totalAmount)}</dd>
@@ -234,24 +298,10 @@ export function OrderDetailPage() {
         <h2 className="mb-3 mt-0 text-base font-semibold">تغییر وضعیت سفارش</h2>
         {locked ? (
           <p className="m-0 text-sm text-muted">
-            این سفارش لغو شده و وضعیت آن قابل تغییر نیست.
+            این سفارش نهایی شده و وضعیت آن قابل تغییر نیست.
           </p>
         ) : (
           <div className="grid max-w-xl gap-3">
-            {isDelivered ? (
-              <div
-                className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm leading-7 text-amber-900"
-                role="note"
-              >
-                <p className="m-0 font-semibold">این سفارش قبلاً تحویل شده است</p>
-                <p className="mt-1.5 mb-0">
-                  در صورت نیاز می‌توانید وضعیت را تغییر دهید؛ مثلاً برای اصلاح
-                  اشتباه ثبت تحویل، یا پیگیری مرجوعی. با تغییر وضعیت از
-                  «تحویل شده»، تاریخ تحویل پاک می‌شود. اگر وضعیت را به
-                  «لغو شده» تغییر دهید، موجودی کالاها به انبار برمی‌گردد.
-                </p>
-              </div>
-            ) : null}
             <Field label="وضعیت جدید" error={fieldErrors.status}>
               <Select
                 value={status}
@@ -259,9 +309,9 @@ export function OrderDetailPage() {
                 aria-invalid={Boolean(fieldErrors.status)}
               >
                 <option value="">انتخاب کنید</option>
-                {Object.entries(orderStatusLabels).map(([value, label]) => (
+                {allowedStatuses.map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {orderStatusLabels[value]}
                   </option>
                 ))}
               </Select>
@@ -282,6 +332,38 @@ export function OrderDetailPage() {
               {statusMutation.isPending ? 'در حال ذخیره...' : 'بروزرسانی وضعیت'}
             </Button>
           </div>
+        )}
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-line bg-surface p-4">
+        <h2 className="mb-3 mt-0 text-base font-semibold">وضعیت پرداخت</h2>
+        {allowedPaymentStatuses.length ? (
+          <div className="grid max-w-xl gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+            <Field label="وضعیت جدید">
+              <Select
+                value={paymentStatus}
+                onChange={(event) =>
+                  setPaymentStatus(event.target.value as PaymentStatus | '')
+                }
+              >
+                <option value="">انتخاب کنید</option>
+                {allowedPaymentStatuses.map((value) => (
+                  <option key={value} value={value}>
+                    {paymentStatusLabels[value]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Button
+              type="button"
+              disabled={!paymentStatus || paymentMutation.isPending}
+              onClick={() => paymentMutation.mutate()}
+            >
+              {paymentMutation.isPending ? 'در حال ذخیره...' : 'ثبت وضعیت پرداخت'}
+            </Button>
+          </div>
+        ) : (
+          <p className="m-0 text-sm text-muted">وضعیت پرداخت نهایی شده است.</p>
         )}
       </section>
     </div>

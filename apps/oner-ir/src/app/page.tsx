@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ProductCard } from "@components/modules/catalog/ProductCard";
 import { BannerSlider } from "@components/modules/banner/BannerSlider";
+import { NewsletterForm } from "@components/modules/newsletter/NewsletterForm";
 import {
   getBanners,
   getCategories,
@@ -146,10 +147,7 @@ export default async function Home() {
       <section className="newsletter">
         <span>نامه‌های آرام Oner</span>
         <h2>از محصولات تازه و قصه‌های ما باخبر شوید</h2>
-        <form>
-          <input type="email" placeholder="ایمیل شما" aria-label="ایمیل" />
-          <button type="button">عضویت</button>
-        </form>
+        <NewsletterForm />
       </section>
     </>
   );

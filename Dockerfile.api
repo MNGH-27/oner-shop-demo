@@ -1,0 +1,31 @@
+FROM node:22-bookworm-slim AS build
+
+WORKDIR /app
+ENV CI=true
+
+COPY package.json package-lock.json ./
+COPY apps/oner-ir/package.json apps/oner-ir/package.json
+COPY apps/shop-admin-panel/package.json apps/shop-admin-panel/package.json
+COPY apps/shop-backend/package.json apps/shop-backend/package.json
+RUN npm ci
+
+COPY apps/shop-backend apps/shop-backend
+RUN npm run build:api
+
+FROM node:22-bookworm-slim AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=5000
+
+COPY --from=build /app/package.json /app/package-lock.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/shop-backend/package.json ./apps/shop-backend/package.json
+COPY --from=build /app/apps/shop-backend/dist ./apps/shop-backend/dist
+COPY --from=build /app/apps/shop-backend/prisma ./apps/shop-backend/prisma
+COPY --from=build /app/apps/shop-backend/uploads ./apps/shop-backend/uploads
+
+WORKDIR /app/apps/shop-backend
+EXPOSE 5000
+CMD ["npm", "run", "start:prod"]
+

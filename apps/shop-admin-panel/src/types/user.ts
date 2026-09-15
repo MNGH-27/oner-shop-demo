@@ -7,7 +7,7 @@ export interface Address {
   province: string
   city: string
   addressLine: string
-  postalCode?: string
+  postalCode: string
   isActive?: boolean
   isDefault: boolean
 }

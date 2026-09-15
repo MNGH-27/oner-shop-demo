@@ -1,15 +1,24 @@
 import Link from "next/link";
-import { Filter } from "lucide-react";
 import { ProductCard } from "@components/modules/catalog/ProductCard";
+import { ProductFilters } from "@components/modules/catalog/ProductFilters";
 import { PriceRangeFields } from "@components/modules/catalog/PriceRangeFields";
 import { getCategories, getProducts } from "@core/services/api/shop.api";
 type Params = {
   search?: string;
   category?: string;
+  page?: string;
   minPrice?: string;
   maxPrice?: string;
   inStock?: string;
 };
+function paginationHref(params: Params, page: number) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value && key !== "page") query.set(key, value);
+  });
+  query.set("page", String(page));
+  return `/products?${query.toString()}`;
+}
 export default async function ProductsPage({
   searchParams,
 }: {
@@ -56,10 +65,7 @@ export default async function ProductsPage({
         </form>
       </div>
       <div className="catalog-layout">
-        <aside className="filters">
-          <h2>
-            <Filter size={18} /> فیلتر محصولات
-          </h2>
+        <ProductFilters>
           <form>
             <input
               type="hidden"
@@ -95,21 +101,45 @@ export default async function ProductsPage({
               پاک کردن فیلترها
             </Link>
           </form>
-        </aside>
+        </ProductFilters>
         <section className="catalog-results">
           <div className="results-count">
             نمایش {products.length.toLocaleString("fa-IR")} از{" "}
             {meta.total.toLocaleString("fa-IR")} محصول
           </div>
           {products.length ? (
-            <div className="product-grid">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id ?? product._id}
-                  product={product}
-                />
-              ))}
-            </div>
+            <>
+              <div className="product-grid">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id ?? product._id}
+                    product={product}
+                  />
+                ))}
+              </div>
+              {meta.totalPages > 1 ? (
+                <nav className="catalog-pagination" aria-label="صفحه‌بندی">
+                  {meta.page > 1 ? (
+                    <Link href={paginationHref(params, meta.page - 1)}>
+                      صفحه قبل
+                    </Link>
+                  ) : (
+                    <span>صفحه قبل</span>
+                  )}
+                  <b>
+                    صفحه {meta.page.toLocaleString("fa-IR")} از{" "}
+                    {meta.totalPages.toLocaleString("fa-IR")}
+                  </b>
+                  {meta.page < meta.totalPages ? (
+                    <Link href={paginationHref(params, meta.page + 1)}>
+                      صفحه بعد
+                    </Link>
+                  ) : (
+                    <span>صفحه بعد</span>
+                  )}
+                </nav>
+              ) : null}
+            </>
           ) : (
             <div className="no-results">محصولی با این فیلتر پیدا نشد.</div>
           )}

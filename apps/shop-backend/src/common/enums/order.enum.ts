@@ -15,7 +15,5 @@ export enum PaymentStatus {
 }
 
 export enum PaymentMethod {
-  CASH_ON_DELIVERY = 'cash_on_delivery',
   ONLINE = 'online',
-  CARD = 'card',
 }

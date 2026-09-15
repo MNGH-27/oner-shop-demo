@@ -1,170 +1,290 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
 
-enum UserRole { admin customer }
-enum OrderStatus { pending confirmed processing shipped delivered cancelled }
-enum PaymentStatus { pending paid failed refunded }
-enum PaymentMethod { cash_on_delivery online card }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  customer
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum PaymentMethod {
+  online
+}
+
+enum PaymentAttemptStatus {
+  pending
+  paid
+  failed
+  cancelled
+}
 
 model User {
-  id String @id @default(uuid()) @db.Uuid
-  email String @unique
-  password String
-  firstName String
-  lastName String
-  phone String? @unique
-  role UserRole @default(customer)
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  addresses Address[]
-  cart Cart?
-  orders Order[]
+  id               String    @id @default(uuid()) @db.Uuid
+  email            String    @unique
+  password         String
+  firstName        String
+  lastName         String
+  phone            String?   @unique
+  phoneVerifiedAt  DateTime?
+  profileCompleted Boolean   @default(true)
+  role             UserRole  @default(customer)
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  addresses        Address[]
+  cart             Cart?
+  orders           Order[]
 }
+
+model OtpChallenge {
+  phone       String   @id
+  codeHash    String
+  expiresAt   DateTime
+  resendAfter DateTime
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
+model OtpRequestLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([createdAt])
+}
+
 model Address {
-  id String @id @default(uuid()) @db.Uuid
-  title String
-  fullName String
-  phone String
-  province String
-  city String
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  fullName    String
+  phone       String
+  province    String
+  city        String
   addressLine String
-  postalCode String?
-  isDefault Boolean @default(false)
-  userId String @db.Uuid
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postalCode  String
+  isDefault   Boolean  @default(false)
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, isDefault])
 }
+
 model Category {
-  id String @id @default(uuid()) @db.Uuid
-  name String
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String
   description String?
-  image String?
-  parentId String? @db.Uuid
-  parent Category? @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children Category[] @relation("CategoryTree")
-  isActive Boolean @default(true)
-  sortOrder Int @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  products Product[]
+  image       String?
+  parentId    String?    @db.Uuid
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryTree")
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  products    Product[]
+
   @@index([parentId, sortOrder])
 }
+
 model Product {
-  id String @id @default(uuid()) @db.Uuid
-  name String
-  description String?
-  descriptionHtml String @default("")
-  price Int @default(0)
-  discountPercent Int @default(0)
-  shippingCost Int @default(0)
-  images String[]
-  categoryId String @db.Uuid
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  stock Int @default(0)
-  colors Json @default("[]")
-  sizeType String @default("letter")
-  sizes Json @default("[]")
+  id                String           @id @default(uuid()) @db.Uuid
+  name              String
+  description       String?
+  descriptionHtml   String           @default("")
+  price             Int              @default(0)
+  discountPercent   Int              @default(0)
+  shippingCost      Int              @default(0)
+  images            String[]
+  categoryId        String           @db.Uuid
+  category          Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  stock             Int              @default(0)
+  colors            Json             @default("[]")
+  sizeType          String           @default("letter")
+  sizes             Json             @default("[]")
   lowStockThreshold Int?
-  lowStockNotified Boolean @default(false)
-  isActive Boolean @default(true)
-  attributes Json @default("{}")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  variants ProductVariant[]
-  relatedProducts Product[] @relation("ProductRelated")
-  relatedBy Product[] @relation("ProductRelated")
-  cartItems CartItem[]
-  orderItems OrderItem[]
+  lowStockNotified  Boolean          @default(false)
+  isActive          Boolean          @default(true)
+  attributes        Json             @default("{}")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  variants          ProductVariant[]
+  relatedProducts   Product[]        @relation("ProductRelated")
+  relatedBy         Product[]        @relation("ProductRelated")
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+
   @@index([categoryId, isActive])
   @@index([name])
 }
+
 model ProductVariant {
-  id String @id @default(uuid()) @db.Uuid
-  productId String @db.Uuid
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  color String @default("")
-  size String @default("")
-  stock Int @default(0)
+  id                String  @id @default(uuid()) @db.Uuid
+  productId         String  @db.Uuid
+  product           Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color             String  @default("")
+  size              String  @default("")
+  stock             Int     @default(0)
   lowStockThreshold Int?
-  lowStockNotified Boolean @default(false)
+  lowStockNotified  Boolean @default(false)
+
   @@unique([productId, color, size])
 }
+
 model Cart {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @unique @db.Uuid
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items CartItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @unique @db.Uuid
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
+
 model CartItem {
-  id String @id @default(uuid()) @db.Uuid
-  cartId String @db.Uuid
-  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String @db.Uuid
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity Int
-  color String @default("")
-  size String @default("")
+  id        String  @id @default(uuid()) @db.Uuid
+  cartId    String  @db.Uuid
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  color     String  @default("")
+  size      String  @default("")
+
   @@unique([cartId, productId, color, size])
 }
+
 model Order {
-  id String @id @default(uuid()) @db.Uuid
-  orderNumber String @unique
-  userId String @db.Uuid
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
-  items OrderItem[]
-  status OrderStatus @default(pending)
+  id              String           @id @default(uuid()) @db.Uuid
+  orderNumber     String           @unique
+  userId          String           @db.Uuid
+  user            User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items           OrderItem[]
+  status          OrderStatus      @default(pending)
   shippingAddress Json
-  paymentStatus PaymentStatus @default(pending)
-  paymentMethod PaymentMethod @default(cash_on_delivery)
-  subtotal Int
-  shippingCost Int @default(0)
-  totalAmount Int
-  notes String?
-  deliveredAt DateTime?
-  cancelledAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  paymentStatus   PaymentStatus    @default(pending)
+  paymentMethod   PaymentMethod    @default(online)
+  subtotal        Int
+  shippingCost    Int              @default(0)
+  couponCode      String?
+  couponDiscount  Int              @default(0)
+  totalAmount     Int
+  notes           String?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  payments        PaymentAttempt[]
+
   @@index([userId, createdAt])
   @@index([status, createdAt])
 }
+
+model PaymentAttempt {
+  id          String               @id @default(uuid()) @db.Uuid
+  orderId     String               @db.Uuid
+  order       Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  gateway     String
+  authority   String               @unique
+  amountRials BigInt
+  status      PaymentAttemptStatus @default(pending)
+  referenceId String?
+  cardPan     String?
+  feeRials    BigInt?
+  errorCode   Int?
+  verifiedAt  DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
+}
+
 model OrderItem {
-  id String @id @default(uuid()) @db.Uuid
-  orderId String @db.Uuid
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String @db.Uuid
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-  name String
-  price Int
-  quantity Int
-  image String?
-  color String?
-  size String?
+  id        String  @id @default(uuid()) @db.Uuid
+  orderId   String  @db.Uuid
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  name      String
+  price     Int
+  quantity  Int
+  image     String?
+  color     String?
+  size      String?
 }
+
 model Banner {
-  id String @id @default(uuid()) @db.Uuid
-  title String
-  subtitle String?
-  image String
-  isActive Boolean @default(true)
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  subtitle  String?
+  image     String
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model Coupon {
-  id String @id @default(uuid()) @db.Uuid
-  code String @unique
-  percent Int
-  minimumAmount Int @default(0)
+  id                    String   @id @default(uuid()) @db.Uuid
+  code                  String   @unique
+  percent               Int
+  minimumAmount         Int      @default(0)
   maximumDiscountAmount Int
-  isActive Boolean @default(true)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive              Boolean  @default(true)
+  expiresAt             DateTime
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
+
 model Setting {
-  key String @id @default("shop")
-  defaultShippingCost Int @default(50000)
+  key                 String   @id @default("shop")
+  defaultShippingCost Int      @default(50000)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  phone     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -13,8 +13,10 @@ import {
   ValidateIf,
   ValidateNested,
   IsEnum,
+  ArrayMaxSize,
 } from 'class-validator';
 import { ProductSizeType } from '../product.types';
+import { ProductVariantStockDto } from './update-product-stock.dto';
 
 export class ProductColorDto {
   @IsString()
@@ -64,7 +66,11 @@ export class CreateProductDto {
   @Min(0)
   price?: number;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(0) @Max(100)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
   discountPercent?: number;
 
   /** اگر خالی باشد از هزینه ارسال پیش‌فرض فروشگاه استفاده می‌شود */
@@ -125,4 +131,11 @@ export class CreateProductDto {
   @IsArray()
   @IsUUID(undefined, { each: true })
   relatedProducts?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(500)
+  @ValidateNested({ each: true })
+  @Type(() => ProductVariantStockDto)
+  variants?: ProductVariantStockDto[];
 }

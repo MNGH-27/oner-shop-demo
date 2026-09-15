@@ -27,9 +27,7 @@ export const paymentStatusLabels: Record<PaymentStatus, string> = {
 }
 
 export const paymentMethodLabels: Record<PaymentMethod, string> = {
-  cash_on_delivery: 'پرداخت در محل',
-  online: 'آنلاین',
-  card: 'کارت',
+  online: 'پرداخت آنلاین',
 }
 
 export function formatPrice(value: number): string {

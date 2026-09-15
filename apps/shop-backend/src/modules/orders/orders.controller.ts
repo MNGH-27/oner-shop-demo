@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Query,
   UseGuards,
@@ -11,10 +12,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import {
-  OrderStatus,
-  PaymentStatus,
-} from '../../common/enums/order.enum';
+import { OrderStatus, PaymentStatus } from '../../common/enums/order.enum';
 import { UserRole } from '../../common/enums/role.enum';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -69,20 +67,23 @@ export class OrdersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Order detail' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.ordersService.findById(id);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update order status' })
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ) {
     return this.ordersService.updateStatus(id, dto);
   }
 
   @Patch(':id/payment-status')
   @ApiOperation({ summary: 'Update payment status' })
   updatePaymentStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePaymentStatusDto,
   ) {
     return this.ordersService.updatePaymentStatus(id, dto);

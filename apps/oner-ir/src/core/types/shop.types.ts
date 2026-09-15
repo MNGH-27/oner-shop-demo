@@ -71,15 +71,73 @@ export interface Customer {
   lastName: string;
   phone: string;
   email?: string;
+  phoneVerifiedAt?: string | null;
+  profileCompleted?: boolean;
   addresses?: CustomerAddress[];
 }
 export interface CustomerAddress {
+  id: string;
+  _id?: string;
   title: string;
   fullName: string;
   phone: string;
   province: string;
   city: string;
   addressLine: string;
-  postalCode?: string;
+  postalCode: string;
   isDefault: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CouponPreview {
+  id?: string;
+  _id?: string;
+  code: string;
+  percent: number;
+  minimumAmount: number;
+  maximumDiscountAmount: number;
+  discountAmount: number;
+}
+
+export type StoreOrderStatus =
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
+
+export interface StoreOrder {
+  id: string;
+  _id?: string;
+  orderNumber: string;
+  status: StoreOrderStatus;
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentMethod?: "online";
+  subtotal: number;
+  shippingCost: number;
+  couponCode?: string | null;
+  couponDiscount: number;
+  totalAmount: number;
+  createdAt: string;
+  items: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image?: string;
+    color?: string;
+    size?: string;
+  }>;
+}
+
+export interface PaginatedOrders {
+  items: StoreOrder[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }

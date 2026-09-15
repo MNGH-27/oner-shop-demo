@@ -14,11 +14,9 @@ import {
   ValidateNested,
   IsEnum,
 } from 'class-validator';
-import {
-  ProductColorDto,
-  ProductSizeDto,
-} from './create-product.dto';
+import { ProductColorDto, ProductSizeDto } from './create-product.dto';
 import { ProductSizeType } from '../product.types';
+import { ProductVariantStockDto } from './update-product-stock.dto';
 
 /** General product update — price & stock have dedicated routes */
 export class UpdateProductDto {
@@ -93,4 +91,16 @@ export class UpdateProductDto {
   @IsArray()
   @IsUUID(undefined, { each: true })
   relatedProducts?: string[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  stock?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductVariantStockDto)
+  variants?: ProductVariantStockDto[];
 }

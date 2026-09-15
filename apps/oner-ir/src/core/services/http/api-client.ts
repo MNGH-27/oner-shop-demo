@@ -10,3 +10,14 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (typeof window !== "undefined" && error?.response?.status === 401) {
+      localStorage.removeItem("oner-access-token");
+      window.dispatchEvent(new Event("oner:unauthorized"));
+    }
+    return Promise.reject(error);
+  },
+);

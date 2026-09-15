@@ -11,7 +11,7 @@ export class TelegramService {
   isConfigured(): boolean {
     return Boolean(
       this.config.get<string>('telegram.botToken') &&
-        this.config.get<string>('telegram.chatId'),
+      this.config.get<string>('telegram.chatId'),
     );
   }
 

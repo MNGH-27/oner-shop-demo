@@ -4,8 +4,10 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -16,6 +18,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
+import { ReplaceCartDto } from './dto/replace-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 
 @ApiTags('Customer - Cart')
@@ -36,10 +39,15 @@ export class CartController {
     return this.cartService.addItem(userId, dto);
   }
 
+  @Put()
+  replace(@CurrentUser('id') userId: string, @Body() dto: ReplaceCartDto) {
+    return this.cartService.replaceCart(userId, dto);
+  }
+
   @Patch('items/:productId')
   updateItem(
     @CurrentUser('id') userId: string,
-    @Param('productId') productId: string,
+    @Param('productId', ParseUUIDPipe) productId: string,
     @Body() dto: UpdateCartItemDto,
   ) {
     return this.cartService.updateItem(userId, productId, dto);
@@ -48,7 +56,7 @@ export class CartController {
   @Delete('items/:productId')
   removeItem(
     @CurrentUser('id') userId: string,
-    @Param('productId') productId: string,
+    @Param('productId', ParseUUIDPipe) productId: string,
   ) {
     return this.cartService.removeItem(userId, productId);
   }

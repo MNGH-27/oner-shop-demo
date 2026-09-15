@@ -9,6 +9,7 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:5000/api";
 export const MEDIA_URL =
   process.env.NEXT_PUBLIC_MEDIA_URL ?? "http://127.0.0.1:5000";
+const fallbackEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO_FALLBACK === "true";
 export function entityId(entity: StoreProduct): string {
   return entity.id ?? entity._id ?? "";
 }
@@ -91,44 +92,73 @@ async function safeFetch<T>(path: string): Promise<T | null> {
 export async function getProducts(params?: {
   search?: string;
   category?: string;
+  page?: string | number;
   limit?: number;
   minPrice?: string | number;
   maxPrice?: string | number;
   inStock?: string | boolean;
 }): Promise<PaginatedProducts> {
-  const query = new URLSearchParams({ limit: String(params?.limit ?? 24) });
+  const query = new URLSearchParams({
+    page: String(params?.page ?? 1),
+    limit: String(params?.limit ?? 24),
+  });
   if (params?.search) query.set("search", params.search);
   if (params?.category) query.set("category", params.category);
-  if (params?.minPrice) query.set("minPrice", String(params.minPrice));
-  if (params?.maxPrice) query.set("maxPrice", String(params.maxPrice));
-  if (params?.inStock) query.set("inStock", "true");
-  return (
-    (await safeFetch<PaginatedProducts>(`/products?${query}`)) ?? {
+  if (params?.minPrice !== undefined && params.minPrice !== "")
+    query.set("minPrice", String(params.minPrice));
+  if (params?.maxPrice !== undefined && params.maxPrice !== "")
+    query.set("maxPrice", String(params.maxPrice));
+  if (params?.inStock === true || params?.inStock === "true")
+    query.set("inStock", "true");
+  const result = await safeFetch<PaginatedProducts>(`/products?${query}`);
+  if (result) return result;
+  if (fallbackEnabled) {
+    return {
       items: fallbackProducts,
-      meta: { total: 4, page: 1, limit: 24, totalPages: 1, priceRange: { min: Math.min(...fallbackProducts.map((item) => item.price)), max: Math.max(...fallbackProducts.map((item) => item.price)) } },
-    }
-  );
+      meta: {
+        total: fallbackProducts.length,
+        page: 1,
+        limit: params?.limit ?? 24,
+        totalPages: 1,
+        priceRange: {
+          min: Math.min(...fallbackProducts.map((item) => item.price)),
+          max: Math.max(...fallbackProducts.map((item) => item.price)),
+        },
+      },
+    };
+  }
+  return {
+    items: [],
+    meta: {
+      total: 0,
+      page: 1,
+      limit: params?.limit ?? 24,
+      totalPages: 1,
+      priceRange: { min: 0, max: 0 },
+    },
+  };
 }
 export async function getBanners(): Promise<StoreBanner[]> {
   return (await safeFetch<StoreBanner[]>("/banners")) ?? [];
 }
 export async function getProduct(id: string): Promise<StoreProduct | null> {
-  return (
-    (await safeFetch<StoreProduct>(`/products/${id}`)) ??
-    fallbackProducts.find((product) => entityId(product) === id) ??
-    null
-  );
+  const result = await safeFetch<StoreProduct>(`/products/${id}`);
+  if (result) return result;
+  return fallbackEnabled
+    ? (fallbackProducts.find((product) => entityId(product) === id) ?? null)
+    : null;
 }
 export async function getCategories(): Promise<StoreCategory[]> {
   const data = await safeFetch<{ items: StoreCategory[] }>("/categories");
-  return data?.items?.length
-    ? data.items
-    : [
+  if (data) return data.items;
+  return fallbackEnabled
+    ? [
         { _id: "demo-cat-1", name: "روانداز" },
         { _id: "demo-cat-2", name: "ست رختخواب" },
         { _id: "demo-cat-3", name: "پتو و بافت" },
         { _id: "demo-cat-4", name: "موسلین چهارلایه" },
-      ];
+      ]
+    : [];
 }
 export async function getCategoryTree(): Promise<StoreCategoryNode[]> {
   return (await safeFetch<StoreCategoryNode[]>("/categories/tree")) ?? [];

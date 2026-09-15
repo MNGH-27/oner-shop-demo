@@ -22,7 +22,7 @@ export interface ShippingAddress {
   province: string
   city: string
   addressLine: string
-  postalCode?: string
+  postalCode: string
 }
 
 export interface OrderUserRef {
@@ -46,6 +46,8 @@ export interface Order {
   paymentMethod: PaymentMethod
   subtotal: number
   shippingCost: number
+  couponCode?: string | null
+  couponDiscount?: number
   totalAmount: number
   notes?: string
   deliveredAt?: string

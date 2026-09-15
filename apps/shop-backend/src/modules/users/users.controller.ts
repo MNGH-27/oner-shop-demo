@@ -4,19 +4,21 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { UserRole } from '../../common/enums/role.enum';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { parseBooleanQuery } from '../../common/transforms/query.transform';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SetUserActiveDto } from './dto/set-user-active.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -32,7 +34,7 @@ class UserQueryDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(parseBooleanQuery)
   @IsBoolean()
   isActive?: boolean;
 }
@@ -69,23 +71,26 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'User detail' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.findById(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
   }
 
   @Patch(':id/active')
   @ApiOperation({ summary: 'Activate / deactivate user' })
-  setActive(@Param('id') id: string, @Body() dto: SetUserActiveDto) {
+  setActive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetUserActiveDto,
+  ) {
     return this.usersService.setActive(id, dto.isActive);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.remove(id);
   }
 }

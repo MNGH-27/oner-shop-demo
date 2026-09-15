@@ -1,42 +1,114 @@
-# استقرار آزمایشی Oner
+# استقرار روی یک سرور ابری لیارا
 
-این مخزن شامل سه برنامه است:
+کل سامانه روی یک Ubuntu Server و با Docker Compose اجرا می‌شود:
 
-- `apps/oner-ir`: فروشگاه Next.js
-- `apps/shop-admin-panel`: پنل مدیریت Vite/React
-- `apps/shop-backend`: API با NestJS
+- فروشگاه Next.js روی پورت عمومی `80`
+- پنل مدیریت روی پورت عمومی `8080`
+- API روی پورت عمومی `5000`
+- PostgreSQL فقط داخل شبکه Docker
+- Volume دائمی برای دیتابیس و تصاویر
 
-## ۱. پایگاه داده
+## منابع تست
 
-پروژه از PostgreSQL استفاده می‌کند. در نسخه دمو یک PostgreSQL قابل دسترس بسازید و رشته اتصال را با نام `DATABASE_URL` تنظیم کنید. در سرور نهایی می‌توان PostgreSQL را با فایل `apps/shop-backend/docker-compose.yml` و Volume دائمی روی همان سرور اجرا کرد.
+سرور فعلی با ۱ CPU، رم ۲GB و دیسک ۲۰GB برای تست اولیه قابل استفاده است. اسکریپت
+آماده‌سازی ۲GB Swap می‌سازد و CI سرویس‌ها را با محدودیت موازی‌سازی build می‌کند.
+برای Production حداقل ۲ CPU، رم ۴GB و دیسک ۴۰GB توصیه می‌شود.
 
-## ۲. بک‌اند در Render
+## ۱. اتصال امن
 
-در Render گزینه Blueprint را انتخاب و همین مخزن را متصل کنید. فایل `render.yaml` سرویس را می‌سازد. هنگام ساخت، متغیرهای زیر را وارد کنید:
+در پنل لیارا وارد بخش «اتصال» سرور شوید و IP و نام کاربری را یادداشت کنید. ورود
+با SSH Key به رمز عبور ترجیح دارد. کلید خصوصی را در چت یا مخزن قرار ندهید.
 
-- `DATABASE_URL`: رشته اتصال PostgreSQL
-- `ADMIN_EMAIL`: ایمیل ورود مدیر
-- `ADMIN_PASSWORD`: رمز قوی مدیر
-- `ADMIN_PANEL_URL`: آدرس نهایی پنل در Vercel
-- `CORS_ORIGINS`: آدرس فروشگاه و پنل، جداشده با ویرگول
-- `TELEGRAM_BOT_TOKEN` و `TELEGRAM_CHAT_ID`: اختیاری برای اعلان تلگرام
+## ۲. آماده‌سازی Ubuntu
 
-## ۳. فروشگاه در Vercel
+فایل `deploy/bootstrap-ubuntu.sh` را روی سرور اجرا کنید. این اسکریپت Docker،
+Compose، فایروال، Swap و مسیر `/opt/oner-shop` را آماده می‌کند. اسکریپت باید با
+دسترسی root اجرا شود.
 
-مخزن را به‌عنوان پروژه جدید وارد کنید و Root Directory را روی `apps/oner-ir` بگذارید. سپس این متغیرها را تنظیم کنید:
+پورت‌های بازشده:
 
-- `NEXT_PUBLIC_API_URL=https://...onrender.com/api`
-- `NEXT_PUBLIC_MEDIA_URL=https://...onrender.com`
+- `22`: اتصال SSH
+- `80`: فروشگاه
+- `5000`: API
+- `8080`: پنل مدیریت
 
-## ۴. پنل مدیریت در Vercel
+پورت PostgreSQL عمومی نمی‌شود.
 
-همین مخزن را بار دیگر به‌عنوان پروژه جدا وارد کنید و Root Directory را روی `apps/shop-admin-panel` بگذارید. متغیرها:
+## ۳. تنظیم محیط سرور
 
-- `VITE_API_BASE_URL=https://...onrender.com/api`
-- `VITE_MEDIA_BASE_URL=https://...onrender.com`
+فایل `deploy/server.env.example` را روی سرور با نام زیر کپی کنید:
 
-پس از ساخته‌شدن پنل، آدرس آن را در `ADMIN_PANEL_URL` و همراه آدرس فروشگاه در `CORS_ORIGINS` سرویس Render ثبت و بک‌اند را دوباره Deploy کنید.
+```text
+/opt/oner-shop/.env.production
+```
 
-## محدودیت نسخه دمو
+تمام موارد `SERVER_IP` را با IP واقعی سرور جایگزین و رمزهای تصادفی، SMS.ir و
+مشخصات مدیر را وارد کنید. این فایل فقط روی سرور می‌ماند و CI آن را حذف یا
+جایگزین نمی‌کند.
 
-فایل‌های آپلودشده روی دیسک سرویس رایگان Render دائمی نیستند و ممکن است بعد از استقرار مجدد حذف شوند. تصاویر اولیه داخل مخزن باقی می‌مانند؛ برای نسخه نهایی باید فضای ذخیره‌سازی مانند S3 یا Cloudinary متصل شود.
+برای ساخت مقدارهای تصادفی می‌توان دو بار دستور زیر را اجرا کرد:
+
+```bash
+openssl rand -hex 32
+```
+
+مقادیر خروجی باید برای `JWT_SECRET`، `OTP_PEPPER` و `POSTGRES_PASSWORD` مستقل
+باشند.
+
+## ۴. تنظیم GitHub
+
+در مخزن GitHub یک Environment با نام `production` بسازید و این Secretها را ثبت
+کنید:
+
+```text
+SERVER_HOST=IP سرور
+SERVER_USER=نام کاربری SSH
+SERVER_SSH_KEY=کلید خصوصی SSH مخصوص استقرار
+```
+
+اگر SSH روی پورت دیگری است، Variable زیر را اضافه کنید:
+
+```text
+SERVER_PORT=22
+```
+
+## ۵. CI/CD
+
+فایل `.github/workflows/ci-cd.yml` در Pull Request تست، lint و build را اجرا
+می‌کند. بعد از Push موفق به `main`، GitHub imageهای Docker را می‌سازد و در GHCR
+قرار می‌دهد. سپس فایل‌های استقرار با SSH به `/opt/oner-shop` منتقل می‌شوند و
+سرور imageهای آماده را دریافت می‌کند. به این ترتیب سرور ایران به Docker Hub
+وابسته نیست و فشار build روی سرور ۲GB وارد نمی‌شود.
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml pull
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-build
+```
+
+در انتها مسیر `/api/health` بررسی و imageهای بدون استفاده پاک می‌شوند تا دیسک
+۲۰GB سریع پر نشود.
+
+Variable زیر نیز باید در GitHub Environment ثبت شود:
+
+```text
+PUBLIC_SERVER_ORIGIN=http://SERVER_IP
+```
+
+## ۶. آدرس‌های تست بدون دامنه
+
+```text
+فروشگاه: http://SERVER_IP
+پنل مدیریت: http://SERVER_IP:8080
+API: http://SERVER_IP:5000/api
+Swagger: http://SERVER_IP:5000/api/docs
+Health: http://SERVER_IP:5000/api/health
+```
+
+پرداخت در این مرحله روی `mock` می‌ماند. برای زرین‌پال واقعی و HTTPS بهتر است
+بعداً دامنه متصل و Nginx به‌همراه گواهی SSL تنظیم شود.
+
+## ۷. بکاپ
+
+داده‌های PostgreSQL و تصاویر در Volumeهای Docker نگهداری می‌شوند، ولی Volume
+به‌تنهایی بکاپ نیست. Snapshot زمان‌بندی‌شده سرور را در لیارا فعال کنید و پیش از
+فعال‌کردن پرداخت واقعی، بکاپ جداگانه PostgreSQL نیز اضافه شود.

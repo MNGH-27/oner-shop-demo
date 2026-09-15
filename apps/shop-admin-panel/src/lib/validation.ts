@@ -57,11 +57,16 @@ export const productSchema = (editing: boolean) => z.object({
   category: z.string().trim().min(1, 'انتخاب دسته‌بندی الزامی است.'),
   images: z.array(z.string()).min(1, 'حداقل یک تصویر برای محصول انتخاب کنید.').max(10, 'حداکثر ۱۰ تصویر مجاز است.'),
   price: numericString('قیمت', { min: 0, integer: true, optional: editing }),
+  stock: numericString('موجودی', { min: 0, integer: true }),
   shippingCost: numericString('هزینه ارسال', { min: 0, integer: true }),
   discountPercent: numericString('درصد تخفیف', { min: 0, max: 100, integer: true }),
   lowStockThreshold: numericString('آستانه اعلان موجودی', { min: 0, integer: true, optional: true }),
-  colors: z.array(z.string().trim().min(1)).min(1, 'حداقل یک رنگ اضافه کنید.'),
-  sizes: z.array(z.string().trim().min(1)).min(1, 'حداقل یک سایز اضافه کنید.'),
+  colors: z.array(z.string().trim().min(1)),
+  sizes: z.array(z.string().trim().min(1)),
+}).superRefine((data, ctx) => {
+  if (Boolean(data.colors.length) !== Boolean(data.sizes.length)) {
+    ctx.addIssue({ code: 'custom', path: ['colors'], message: 'رنگ و سایز باید با هم تعریف شوند، یا هر دو خالی باشند.' })
+  }
 })
 
 export const priceSchema = z.object({ price: numericString('قیمت', { min: 0, integer: true }) })
@@ -71,7 +76,7 @@ export const stockSchema = z.object({
 })
 export const settingsSchema = z.object({ defaultShippingCost: numericString('هزینه ارسال', { min: 0, integer: true }) })
 export const orderStatusSchema = z.object({
-  status: z.enum(['pending', 'processing', 'shipped', 'delivered', 'cancelled'], { message: 'یک وضعیت معتبر انتخاب کنید.' }),
+  status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'], { message: 'یک وضعیت معتبر انتخاب کنید.' }),
   notes: z.string().trim().max(1000, 'یادداشت نباید بیشتر از ۱۰۰۰ کاراکتر باشد.'),
 })
 

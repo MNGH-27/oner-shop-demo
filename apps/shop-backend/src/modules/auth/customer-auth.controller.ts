@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Ip,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -8,8 +18,12 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
+import type { AuthenticationMethod } from './auth.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RequestOtpDto } from './dto/request-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @ApiTags('Customer - Auth')
 @Controller('auth')
@@ -29,14 +43,17 @@ export class CustomerAuthController {
     return this.authService.loginCustomer(dto);
   }
 
-  /*
-   * TODO(phone-login): ورود مشتری با شماره همراه (OTP)
-   * محل پیشنهادی endpointها (برای سایت Next.js فروشگاه):
-   *   POST /auth/otp/request  { phone }
-   *   POST /auth/otp/verify   { phone, code }
-   * سرویس: AuthService.requestOtp / verifyOtp — ذخیره کد، ارسال SMS، صدور JWT بعد از تأیید.
-   * پنل ادمین فعلاً ایمیل/رمز است؛ این مسیر برای مشتریان فروشگاه است.
-   */
+  @Post('otp/request')
+  @HttpCode(HttpStatus.OK)
+  requestOtp(@Body() dto: RequestOtpDto, @Ip() clientIp: string) {
+    return this.authService.requestOtp(dto.phone, clientIp);
+  }
+
+  @Post('otp/verify')
+  @HttpCode(HttpStatus.OK)
+  verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.authService.verifyOtp(dto.phone, dto.code);
+  }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,9 +67,33 @@ export class CustomerAuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
   @Patch('me')
-  updateProfile(@CurrentUser('id') userId: string, @Body() dto: UpdateUserDto) {
+  async updateProfile(
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateUserDto,
+  ) {
     const safeDto: UpdateUserDto = { ...dto };
     delete safeDto.role;
-    return this.usersService.update(userId, safeDto);
+    delete safeDto.phone;
+    delete safeDto.isActive;
+    delete safeDto.password;
+    await this.usersService.update(userId, safeDto);
+    return this.usersService.findProfileById(userId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  @Patch('password')
+  changePassword(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('authenticationMethod')
+    authenticationMethod: AuthenticationMethod,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changeCustomerPassword(
+      userId,
+      authenticationMethod,
+      dto,
+    );
   }
 }

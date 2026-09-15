@@ -58,11 +58,13 @@ oner-shop/
 - Request validation using `class-validator`
 - Independent inventory tracking for each color and size combination
 - Stock validation for cart and order quantities
-- Demo seed data including an administrator, customers, categories, products, banners, and coupons
+- Opt-in administrator and demo seed data controlled by `SEED_ADMIN` and `SEED_DEMO`
 - Uploaded file delivery through `/uploads`
 - Telegram notifications when inventory reaches a configured threshold
 - Swagger documentation at `/api/docs`
 - Configurable CORS for the storefront and admin panel
+- Saved recipient addresses with mandatory 10-digit postal codes
+- Online ZarinPal payments with a safe local mock gateway
 
 ## Requirements
 

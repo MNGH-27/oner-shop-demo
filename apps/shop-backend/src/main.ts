@@ -10,6 +10,11 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
 
+  // Render and most production hosts sit behind exactly one trusted proxy.
+  // This makes request-IP based OTP throttling work without trusting arbitrary
+  // X-Forwarded-For values from the public internet.
+  app.set('trust proxy', 1);
+
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
@@ -58,4 +63,4 @@ async function bootstrap() {
   console.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 
-bootstrap();
+void bootstrap();

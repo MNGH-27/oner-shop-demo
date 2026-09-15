@@ -8,9 +8,10 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
+import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { mkdir, writeFile } from 'fs/promises';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/role.enum';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -27,7 +28,48 @@ type UploadedImage = {
   destination: string;
   filename: string;
   path: string;
+  buffer: Buffer;
 };
+
+export function imageExtension(
+  buffer: Buffer,
+): 'jpg' | 'png' | 'webp' | 'gif' | null {
+  if (
+    buffer.length >= 3 &&
+    buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))
+  ) {
+    return 'jpg';
+  }
+  if (
+    buffer.length >= 8 &&
+    buffer
+      .subarray(0, 8)
+      .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  ) {
+    return 'png';
+  }
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+    buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+  ) {
+    return 'webp';
+  }
+  if (
+    buffer.length >= 6 &&
+    ['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString('ascii'))
+  ) {
+    return 'gif';
+  }
+  return null;
+}
+
+const MIME_BY_EXTENSION = {
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+} as const;
 
 @ApiTags('Admin - Uploads')
 @ApiBearerAuth()
@@ -50,13 +92,7 @@ export class UploadsController {
   })
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: UPLOAD_DIR,
-        filename: (_req, file, cb) => {
-          const ext = extname(file.originalname).toLowerCase() || '.jpg';
-          cb(null, `${randomUUID()}${ext}`);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (!/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) {
           cb(null, false);
@@ -64,23 +100,40 @@ export class UploadsController {
         }
         cb(null, true);
       },
-      limits: { fileSize: 5 * 1024 * 1024 },
+      limits: { fileSize: 5 * 1024 * 1024, files: 10, fields: 1, parts: 11 },
     }),
   )
-  upload(@UploadedFiles() uploaded: { files?: UploadedImage[] }) {
+  async upload(@UploadedFiles() uploaded: { files?: UploadedImage[] }) {
     const files = uploaded?.files ?? [];
     if (!files.length) {
       throw new BadRequestException('فایلی ارسال نشده است یا فرمت مجاز نیست');
     }
 
-    return {
-      items: files.map((file) => ({
-        url: `/uploads/${file.filename}`,
-        filename: file.filename,
-        originalName: file.originalname,
-        size: file.size,
-        mimeType: file.mimetype,
-      })),
-    };
+    const detected = files.map((file) => ({
+      file,
+      extension: imageExtension(file.buffer),
+    }));
+    if (detected.some((item) => !item.extension)) {
+      throw new BadRequestException('محتوای یک یا چند فایل، تصویر معتبر نیست');
+    }
+
+    await mkdir(UPLOAD_DIR, { recursive: true });
+    const items = await Promise.all(
+      detected.map(async ({ file, extension }) => {
+        const safeExtension = extension!;
+        const filename = `${randomUUID()}.${safeExtension}`;
+        await writeFile(join(UPLOAD_DIR, filename), file.buffer, {
+          flag: 'wx',
+        });
+        return {
+          url: `/uploads/${filename}`,
+          filename,
+          originalName: file.originalname,
+          size: file.size,
+          mimeType: MIME_BY_EXTENSION[safeExtension],
+        };
+      }),
+    );
+    return { items };
   }
 }

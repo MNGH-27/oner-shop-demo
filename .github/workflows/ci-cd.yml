@@ -1,0 +1,167 @@
+name: CI and server deployment
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify monorepo
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:store
+      - run: npm run lint:admin
+      - run: npm run test:api -- --runInBand
+      - run: npm run build:api
+      - name: Build storefront
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:5000/api
+          NEXT_PUBLIC_MEDIA_URL: http://127.0.0.1:5000
+          NEXT_PUBLIC_ENABLE_DEMO_FALLBACK: "false"
+        run: npm run build:store
+      - name: Build admin panel
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:5000/api
+          VITE_MEDIA_BASE_URL: http://127.0.0.1:5000
+        run: npm run build:admin
+
+  images:
+    name: Build production images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image_prefix: ${{ steps.names.outputs.image_prefix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image names
+        id: names
+        shell: bash
+        run: echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/oner-shop" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.api
+          push: true
+          tags: ${{ steps.names.outputs.image_prefix }}/api:${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build and push storefront
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.store
+          push: true
+          tags: ${{ steps.names.outputs.image_prefix }}/store:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.PUBLIC_SERVER_ORIGIN }}:5000/api
+            NEXT_PUBLIC_MEDIA_URL=${{ vars.PUBLIC_SERVER_ORIGIN }}:5000
+            NEXT_PUBLIC_ENABLE_DEMO_FALLBACK=false
+          cache-from: type=gha,scope=store
+          cache-to: type=gha,mode=max,scope=store
+
+      - name: Build and push admin panel
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.admin
+          push: true
+          tags: ${{ steps.names.outputs.image_prefix }}/admin:${{ github.sha }}
+          build-args: |
+            VITE_API_BASE_URL=${{ vars.PUBLIC_SERVER_ORIGIN }}:5000/api
+            VITE_MEDIA_BASE_URL=${{ vars.PUBLIC_SERVER_ORIGIN }}:5000
+          cache-from: type=gha,scope=admin
+          cache-to: type=gha,mode=max,scope=admin
+
+      - name: Mirror PostgreSQL image to GHCR
+        run: |
+          docker pull postgres:16-alpine
+          docker tag postgres:16-alpine "${{ steps.names.outputs.image_prefix }}/postgres:16-alpine"
+          docker push "${{ steps.names.outputs.image_prefix }}/postgres:16-alpine"
+
+  deploy:
+    name: Deploy to Liara cloud server
+    needs: images
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      SSH_HOST: ${{ secrets.SERVER_HOST }}
+      SSH_USER: ${{ secrets.SERVER_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      SSH_PORT: ${{ vars.SERVER_PORT || '22' }}
+      IMAGE_PREFIX: ${{ needs.images.outputs.image_prefix }}
+      IMAGE_TAG: ${{ github.sha }}
+      GHCR_USER: ${{ github.actor }}
+      GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload release files
+        run: |
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='node_modules/' \
+            --exclude='**/node_modules/' \
+            --exclude='**/.next/' \
+            --exclude='**/dist/' \
+            -e "ssh -p $SSH_PORT" \
+            ./ "$SSH_USER@$SSH_HOST:/opt/oner-shop/"
+
+      - name: Authenticate server to GHCR
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "docker login ghcr.io --username '$GHCR_USER' --password-stdin"
+
+      - name: Pull and restart services
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "cd /opt/oner-shop && IMAGE_PREFIX='$IMAGE_PREFIX' IMAGE_TAG='$IMAGE_TAG' docker compose --env-file .env.production -f docker-compose.prod.yml pull && IMAGE_PREFIX='$IMAGE_PREFIX' IMAGE_TAG='$IMAGE_TAG' docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-build --remove-orphans && docker image prune -f && docker logout ghcr.io"
+
+      - name: Verify deployment
+        run: |
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error "http://$SSH_HOST:5000/api/health"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1

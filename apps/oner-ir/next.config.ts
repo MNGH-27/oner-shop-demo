@@ -1,12 +1,25 @@
 import type { NextConfig } from "next";
+import path from "node:path";
+
+const mediaOrigin = new URL(
+  process.env.NEXT_PUBLIC_MEDIA_URL ?? "http://127.0.0.1:5000",
+);
+const localMediaHost = ["localhost", "127.0.0.1", "::1"].includes(
+  mediaOrigin.hostname,
+);
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: path.join(process.cwd(), "../.."),
   images: {
-    // بک‌اند تصاویر فروشگاه در شبکه محلی و روی پورت ۵۰۰۰ سرو می‌شود.
-    dangerouslyAllowLocalIP: true,
+    dangerouslyAllowLocalIP: localMediaHost,
     remotePatterns: [
-      { protocol: "http", hostname: "127.0.0.1", port: "5000", pathname: "/uploads/**" },
-      { protocol: "http", hostname: "localhost", port: "5000", pathname: "/uploads/**" },
+      {
+        protocol: mediaOrigin.protocol.replace(":", "") as "http" | "https",
+        hostname: mediaOrigin.hostname,
+        port: mediaOrigin.port,
+        pathname: "/uploads/**",
+      },
     ],
   },
 };

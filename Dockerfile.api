@@ -24,9 +24,12 @@ COPY --from=build /app/apps/shop-backend/package.json ./apps/shop-backend/packag
 COPY --from=build /app/apps/shop-backend/node_modules ./apps/shop-backend/node_modules
 COPY --from=build /app/apps/shop-backend/dist ./apps/shop-backend/dist
 COPY --from=build /app/apps/shop-backend/prisma ./apps/shop-backend/prisma
-COPY --from=build /app/apps/shop-backend/uploads ./apps/shop-backend/uploads
+COPY --from=build /app/apps/shop-backend/uploads ./seed-uploads
+COPY deploy/api-entrypoint.sh /usr/local/bin/oner-api-entrypoint
+RUN chmod +x /usr/local/bin/oner-api-entrypoint
 
 WORKDIR /app/apps/shop-backend
 EXPOSE 5000
+ENTRYPOINT ["oner-api-entrypoint"]
 CMD ["npm", "run", "start:prod"]
 

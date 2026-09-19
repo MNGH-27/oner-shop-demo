@@ -2852,3 +2852,23 @@ h3,
     padding-top: 10px;
   }
 }
+
+/* Warm neutral surfaces for the announcement and newsletter sections. */
+.announce,
+.newsletter {
+  background: #f2efe7;
+  color: var(--ink);
+}
+
+.newsletter form {
+  border-bottom-color: rgba(41, 40, 35, 0.45);
+}
+
+.newsletter input,
+.newsletter button {
+  color: var(--ink);
+}
+
+.newsletter input::placeholder {
+  color: rgba(41, 40, 35, 0.65);
+}

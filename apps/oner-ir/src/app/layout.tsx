@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Vazirmatn } from "next/font/google";
+import { Bodoni_Moda, Vazirmatn } from "next/font/google";
 import "./globals.css";
 import "./features.css";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,6 +12,11 @@ const vazirmatn = Vazirmatn({
   variable: "--font-vazirmatn",
   display: "swap",
 });
+const brandFont = Bodoni_Moda({
+  subsets: ["latin"],
+  variable: "--font-brand",
+  display: "swap",
+});
 export const metadata: Metadata = {
   title: { default: "Oner | کالای خواب کودک", template: "%s | Oner" },
   description:
@@ -19,7 +24,11 @@ export const metadata: Metadata = {
 };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
+    <html
+      lang="fa"
+      dir="rtl"
+      className={`${vazirmatn.variable} ${brandFont.variable}`}
+    >
       <body>
         <AppProvider>
           <SiteHeader />

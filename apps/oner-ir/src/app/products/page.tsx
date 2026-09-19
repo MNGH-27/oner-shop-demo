@@ -32,7 +32,7 @@ export default async function ProductsPage({
   return (
     <div className="shop-page">
       <header className="page-hero">
-        <span className="eyebrow">فروشگاه Oner</span>
+        <span className="eyebrow">فروشگاه <span className="brand-name">ONER</span></span>
         <h1>محصولات لطیف برای خواب‌های آرام</h1>
         <p>
           {params.search

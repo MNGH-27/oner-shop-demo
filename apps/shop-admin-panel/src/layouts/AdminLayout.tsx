@@ -26,9 +26,9 @@ export function AdminLayout() {
     <div className="grid min-h-screen bg-bg lg:grid-cols-[260px_1fr]">
       <aside className="flex flex-col gap-6 border-b border-line bg-surface p-4 lg:border-b-0 lg:border-l">
         <div className="flex items-center gap-3 border-b border-line px-2 pb-4">
-          <span className="oner-mark">oner<span>✦</span></span>
+          <span className="oner-mark">ONER</span>
           <div>
-            <strong className="block text-base">Oner</strong>
+            <strong className="brand-name block text-base">ONER</strong>
             <span className="block text-xs text-muted">مدیریت فروشگاه</span>
           </div>
         </div>

@@ -16,12 +16,18 @@
 
 @layer components {
   .oner-mark {
-    @apply inline-flex min-w-16 items-center justify-center text-[1.35rem] font-black tracking-[-0.08em] text-ink;
+    @apply inline-flex min-w-16 items-center justify-center text-[1.35rem] font-normal text-ink;
     direction: ltr;
+    font-family: Didot, 'Bodoni MT', 'Times New Roman', serif;
+    letter-spacing: 0.14em;
   }
 
-  .oner-mark span {
-    @apply mr-0.5 text-base text-[#a9bbc3];
+  .brand-name {
+    direction: ltr;
+    display: inline-block;
+    font-family: Didot, 'Bodoni MT', 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: 0.1em;
   }
 
   .oner-mark-login {

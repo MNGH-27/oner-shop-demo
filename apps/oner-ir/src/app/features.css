@@ -820,6 +820,81 @@
     padding-right: 15px;
   }
 }
+
+/* ONER wordmark */
+.brand-name,
+.logo,
+.hero-brand-lockup,
+.oner-mark {
+  direction: ltr;
+  font-family: var(--font-brand), Didot, "Bodoni MT", "Times New Roman", serif;
+}
+.brand-name {
+  display: inline-block;
+  letter-spacing: 0.12em;
+}
+.logo {
+  gap: 0;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1;
+}
+.logo b {
+  font: inherit;
+}
+.hero-brand-lockup {
+  display: grid;
+  width: fit-content;
+  margin: 26px 0 28px;
+  color: #50483f;
+  text-align: center;
+}
+.hero-brand-lockup strong {
+  font-size: clamp(72px, 8.2vw, 116px);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  line-height: 0.92;
+}
+.hero-brand-lockup span {
+  margin-top: 20px;
+  font-size: clamp(14px, 1.5vw, 20px);
+  font-style: italic;
+  letter-spacing: 0.28em;
+  white-space: nowrap;
+}
+.footer-brand .logo {
+  align-self: flex-start;
+  color: #f7f3e9;
+}
+
+@media (max-width: 960px) {
+  .hero-brand-lockup {
+    width: 100%;
+    margin-block: 24px;
+  }
+  .hero-brand-lockup strong {
+    font-size: clamp(64px, 18vw, 92px);
+  }
+  .hero-brand-lockup span {
+    font-size: clamp(12px, 3.5vw, 17px);
+    letter-spacing: 0.2em;
+  }
+}
+
+@media (max-width: 420px) {
+  .site-header .logo {
+    font-size: 24px;
+    letter-spacing: 0.11em;
+  }
+  .hero-brand-lockup strong {
+    font-size: 58px;
+  }
+  .hero-brand-lockup span {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+}
 .categories-mega {
   top: 100%;
 }

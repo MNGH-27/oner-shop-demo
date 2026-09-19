@@ -260,7 +260,7 @@ export function ProfilePanel() {
         {authMode === "register" ? (
           <form className="otp-form" onSubmit={submitRegistration}>
             <div className="otp-heading">
-              <span>عضویت در Oner</span>
+              <span>عضویت در <span className="brand-name">ONER</span></span>
               <h1>ساخت حساب کاربری</h1>
               <p>اطلاعات زیر را وارد کنید تا حساب شما ساخته شود.</p>
             </div>

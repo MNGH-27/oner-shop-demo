@@ -122,8 +122,7 @@ export function SiteHeader() {
           {menu ? <X /> : <Menu />}
         </button>
         <Link href="/" className="logo" onClick={closeMenu}>
-          <span className="logo-star">✦</span>
-          <b>oner</b>
+          <b>ONER</b>
         </Link>
         <nav
           id="main-navigation"

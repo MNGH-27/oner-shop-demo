@@ -20,12 +20,11 @@ export default async function Home() {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">کالای خواب کودک Oner</span>
-          <h1>
-            آرامش،
-            <br />
-            در لطیف‌ترین شکل خود
-          </h1>
+          <span className="eyebrow">کالای خواب کودک</span>
+          <div className="hero-brand-lockup" aria-label="ONER, little dreams, soft nights">
+            <strong>ONER</strong>
+            <span>little dreams, soft nights</span>
+          </div>
           <p>
             منسوجات کودک با پارچه‌های طبیعی، رنگ‌های آرام و دوختی که برای سال‌ها
             کنار شما می‌ماند.
@@ -73,7 +72,7 @@ export default async function Home() {
       <section className="section">
         <div className="section-head">
           <div>
-            <span className="eyebrow">دنیای Oner</span>
+            <span className="eyebrow">دنیای <span className="brand-name">ONER</span></span>
             <h2>برای هر گوشه از خواب کودک</h2>
           </div>
           <Link href="/products">مشاهده همه</Link>
@@ -110,7 +109,7 @@ export default async function Home() {
       <section className="section products-section">
         <div className="section-head">
           <div>
-            <span className="eyebrow">تازه‌های Oner</span>
+            <span className="eyebrow">تازه‌های <span className="brand-name">ONER</span></span>
             <h2>محصولات تازه رسیده</h2>
           </div>
           <Link href="/products">مشاهده فروشگاه</Link>
@@ -133,7 +132,7 @@ export default async function Home() {
           ) : null}
         </div>
         <div className="story-copy">
-          <span className="eyebrow">داستان Oner</span>
+          <span className="eyebrow">داستان <span className="brand-name">ONER</span></span>
           <h2>لطافت، چیزی فراتر از یک انتخاب است</h2>
           <p>
             ما از جنس، رنگ و جزئیات شروع می‌کنیم تا محصولی بسازیم که فضای اتاق
@@ -145,7 +144,7 @@ export default async function Home() {
         </div>
       </section>
       <section className="newsletter">
-        <span>نامه‌های آرام Oner</span>
+        <span>نامه‌های آرام <span className="brand-name">ONER</span></span>
         <h2>از محصولات تازه و قصه‌های ما باخبر شوید</h2>
         <NewsletterForm />
       </section>

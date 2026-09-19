@@ -27,7 +27,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
     return (
       <div className="account-page account-page-guest">
         <header className="account-hero">
-          <span className="eyebrow">حساب Oner</span>
+          <span className="eyebrow">حساب <span className="brand-name">ONER</span></span>
           <h1>حساب کاربری</h1>
           <p>برای مدیریت مشخصات، نشانی‌ها و سفارش‌ها وارد شوید.</p>
         </header>
@@ -39,8 +39,10 @@ export function AccountShell({ children }: { children: ReactNode }) {
   return (
     <div className="account-page">
       <header className="account-hero">
-        <span className="eyebrow">حساب Oner</span>
-        <h1>سلام، {user.firstName || "همراه Oner"}</h1>
+        <span className="eyebrow">حساب <span className="brand-name">ONER</span></span>
+        <h1>
+          سلام، {user.firstName || <>همراه <span className="brand-name">ONER</span></>}
+        </h1>
         <p>اطلاعات حساب، نشانی‌ها و سفارش‌های شما در یک فضای منظم.</p>
       </header>
       <div className="account-layout">

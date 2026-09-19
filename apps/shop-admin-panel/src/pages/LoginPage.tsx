@@ -49,9 +49,9 @@ export function LoginPage() {
     <div className="login-shell grid min-h-screen place-items-center p-6">
       <div className="w-full max-w-[430px] rounded-3xl border border-line bg-surface p-7 shadow-[0_24px_70px_rgba(50,45,37,0.09)] sm:p-9">
         <div className="mb-8 flex items-center gap-4 border-b border-line pb-6">
-          <span className="oner-mark oner-mark-login">oner<span>✦</span></span>
+          <span className="oner-mark oner-mark-login">ONER</span>
           <div>
-            <h1 className="m-0 text-[1.35rem] font-bold">پنل مدیریت Oner</h1>
+            <h1 className="m-0 text-[1.35rem] font-bold">پنل مدیریت <span className="brand-name">ONER</span></h1>
             <p className="mt-1 mb-0 text-sm text-muted">
               برای ادامه وارد حساب ادمین شوید
             </p>

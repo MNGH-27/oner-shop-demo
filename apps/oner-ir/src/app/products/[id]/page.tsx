@@ -55,9 +55,11 @@ export default async function ProductPage({
         <ProductGallery images={product.images} name={product.name} />
         <div className="detail-copy">
           <span className="eyebrow">
-            {typeof product.category === "string"
-              ? "Oner"
-              : product.category.name}
+            {typeof product.category === "string" ? (
+              <span className="brand-name">ONER</span>
+            ) : (
+              product.category.name
+            )}
           </span>
           <h1>{product.name}</h1>
           <div className="detail-price">

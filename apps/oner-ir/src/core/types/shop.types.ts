@@ -122,6 +122,17 @@ export interface StoreOrder {
   couponCode?: string | null;
   couponDiscount: number;
   totalAmount: number;
+  reservationStatus?: "reserved" | "committed" | "released" | null;
+  reservationExpiresAt?: string | null;
+  shippingAddress?: {
+    fullName: string;
+    phone: string;
+    province: string;
+    city: string;
+    addressLine: string;
+    postalCode: string;
+  };
+  notes?: string | null;
   createdAt: string;
   items: Array<{
     id: string;

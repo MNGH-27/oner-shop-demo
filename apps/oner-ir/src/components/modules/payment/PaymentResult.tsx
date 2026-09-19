@@ -9,6 +9,7 @@ import { useAuthStore } from "@core/services/stores/auth.store";
 import { useCartStore } from "@core/services/stores/cart.store";
 import type { StoreOrder } from "@core/types/shop.types";
 import { formatPrice } from "@core/utils/format.utils";
+import { ReservationTimer } from "@components/modules/orders/ReservationTimer";
 
 export function PaymentResult({
   orderId,
@@ -53,6 +54,24 @@ export function PaymentResult({
     }
   };
 
+  const expire = () => {
+    clear();
+    setOrder((current) =>
+      current
+        ? {
+            ...current,
+            status: "cancelled",
+            paymentStatus: "failed",
+            reservationStatus: "released",
+            reservationExpiresAt: null,
+          }
+        : current,
+    );
+    toast.info(
+      "مهلت پرداخت تمام شد؛ برای خرید باید محصول را دوباره انتخاب کنید.",
+    );
+  };
+
   if (!user) {
     return (
       <section className="payment-result-card failed">
@@ -70,7 +89,7 @@ export function PaymentResult({
       <section className="payment-result-card failed">
         <XCircle size={48} />
         <h1>اطلاعات تراکنش کامل نیست</h1>
-        <Link className="primary-btn" href="/orders">
+        <Link className="primary-btn" href="/profile/orders">
           مشاهده سفارش‌ها
         </Link>
       </section>
@@ -87,11 +106,30 @@ export function PaymentResult({
   }
 
   const paid = order?.paymentStatus === "paid";
+  const expired = order?.reservationStatus === "released";
   return (
     <section className={`payment-result-card ${paid ? "paid" : "failed"}`}>
       {paid ? <CheckCircle2 size={54} /> : <XCircle size={54} />}
       <span>{paid ? "پرداخت تأیید شد" : "پرداخت کامل نشد"}</span>
-      <h1>{paid ? "سفارش شما با موفقیت ثبت شد" : "دوباره تلاش کنید"}</h1>
+      <h1>
+        {paid
+          ? "سفارش شما با موفقیت ثبت شد"
+          : expired
+            ? "مهلت پرداخت تمام شد"
+            : "دوباره تلاش کنید"}
+      </h1>
+      {!paid &&
+      !expired &&
+      order?.reservationStatus === "reserved" &&
+      order.reservationExpiresAt ? (
+        <ReservationTimer expiresAt={order.reservationExpiresAt} onExpire={expire} />
+      ) : null}
+      {expired ? (
+        <p>
+          موجودی رزروشده آزاد شده است. برای ادامه خرید، محصول موردنظر را دوباره
+          انتخاب کنید.
+        </p>
+      ) : null}
       {order ? (
         <div className="payment-result-details">
           <p>
@@ -111,13 +149,16 @@ export function PaymentResult({
         </p>
       )}
       <div className="payment-result-actions">
-        {!paid && order ? (
+        {!paid && !expired && order?.reservationStatus === "reserved" ? (
           <button className="primary-btn" onClick={retry} disabled={retrying}>
             <RotateCcw size={17} />
             {retrying ? "در حال اتصال..." : "پرداخت دوباره"}
           </button>
         ) : null}
-        <Link className={paid ? "primary-btn" : "secondary-btn"} href="/orders">
+        <Link
+          className={paid ? "primary-btn" : "secondary-btn"}
+          href="/profile/orders"
+        >
           مشاهده سفارش‌ها
         </Link>
         <Link className="text-link" href="/products">

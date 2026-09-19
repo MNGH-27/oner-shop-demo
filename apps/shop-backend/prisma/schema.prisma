@@ -39,6 +39,12 @@ enum PaymentAttemptStatus {
   cancelled
 }
 
+enum StockReservationStatus {
+  reserved
+  committed
+  released
+}
+
 model User {
   id               String    @id @default(uuid()) @db.Uuid
   email            String    @unique
@@ -194,7 +200,9 @@ model Order {
   shippingCost    Int              @default(0)
   couponCode      String?
   couponDiscount  Int              @default(0)
-  totalAmount     Int
+  totalAmount          Int
+  reservationStatus    StockReservationStatus?
+  reservationExpiresAt DateTime?
   notes           String?
   deliveredAt     DateTime?
   cancelledAt     DateTime?
@@ -204,6 +212,7 @@ model Order {
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  @@index([reservationStatus, reservationExpiresAt])
 }
 
 model PaymentAttempt {

@@ -23,11 +23,12 @@ const html = (
   orderNumber: string,
   authority: string,
   amount: number,
+  expiresAt: Date | null,
 ) => `<!doctype html>
 <html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>درگاه پرداخت آزمایشی</title><style>
-body{margin:0;background:#f4f0e8;color:#27231f;font-family:Tahoma,sans-serif;display:grid;min-height:100vh;place-items:center;padding:18px;box-sizing:border-box}.card{width:min(100%,440px);background:#fff;border:1px solid #ddd2c1;padding:32px;box-sizing:border-box}.tag{color:#806b55;font-size:12px}.amount{font-size:27px;margin:24px 0}.row{display:flex;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid #eee7dd}.actions{display:grid;gap:10px;margin-top:28px}button{width:100%;padding:14px;border:1px solid #27231f;cursor:pointer;font:inherit}.pay{background:#27231f;color:#fff}.cancel{background:#fff;color:#7d382f}@media(max-width:480px){.card{padding:24px 18px}}
-</style></head><body><main class="card"><span class="tag">محیط توسعه — پرداخت واقعی انجام نمی‌شود</span><h1>درگاه آزمایشی</h1><div class="row"><span>شماره سفارش</span><b dir="ltr">${orderNumber}</b></div><div class="amount">${amount.toLocaleString('fa-IR')} تومان</div><form class="actions" method="post" action="/api/payments/mock/${encodeURIComponent(authority)}/complete"><button class="pay" name="result" value="success">پرداخت موفق آزمایشی</button><button class="cancel" name="result" value="cancel">انصراف از پرداخت</button></form></main></body></html>`;
+body{margin:0;background:#f4f0e8;color:#27231f;font-family:Tahoma,sans-serif;display:grid;min-height:100vh;place-items:center;padding:18px;box-sizing:border-box}.card{width:min(100%,440px);background:#fff;border:1px solid #ddd2c1;padding:32px;box-sizing:border-box}.tag{color:#806b55;font-size:12px}.amount{font-size:27px;margin:24px 0}.row{display:flex;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid #eee7dd}.timer{margin-top:18px;padding:12px;background:#f4eee0;color:#72571c;text-align:center}.timer.expired{background:#f8eae7;color:#923c32}.actions{display:grid;gap:10px;margin-top:28px}button{width:100%;padding:14px;border:1px solid #27231f;cursor:pointer;font:inherit}.pay{background:#27231f;color:#fff}.pay:disabled{cursor:not-allowed;opacity:.45}.cancel{background:#fff;color:#7d382f}@media(max-width:480px){.card{padding:24px 18px}}
+</style></head><body><main class="card"><span class="tag">محیط توسعه — پرداخت واقعی انجام نمی‌شود</span><h1>درگاه آزمایشی</h1><div class="row"><span>شماره سفارش</span><b dir="ltr">${orderNumber}</b></div><div class="amount">${amount.toLocaleString('fa-IR')} تومان</div><div class="timer" id="timer">در حال محاسبه مهلت پرداخت…</div><form class="actions" method="post" action="/api/payments/mock/${encodeURIComponent(authority)}/complete"><button class="pay" id="pay" name="result" value="success">پرداخت موفق آزمایشی</button><button class="cancel" name="result" value="cancel">انصراف از پرداخت</button></form></main><script>const expires=${expiresAt?.getTime() ?? 0};const timer=document.getElementById('timer');const pay=document.getElementById('pay');function tick(){const seconds=Math.max(0,Math.ceil((expires-Date.now())/1000));if(!seconds){timer.textContent='مهلت پرداخت تمام شد؛ کالاها را دوباره انتخاب کنید';timer.classList.add('expired');pay.disabled=true;return}const minutes=Math.floor(seconds/60);const rest=String(seconds%60).padStart(2,'0');timer.textContent='زمان باقی‌مانده پرداخت: '+minutes+':'+rest}tick();setInterval(tick,1000)</script></body></html>`;
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -74,7 +75,12 @@ export class PaymentsController {
     return response
       .type('html')
       .send(
-        html(attempt.order.orderNumber, authority, attempt.order.totalAmount),
+        html(
+          attempt.order.orderNumber,
+          authority,
+          attempt.order.totalAmount,
+          attempt.order.reservationExpiresAt,
+        ),
       );
   }
 

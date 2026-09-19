@@ -1,7 +1,6 @@
 "use client";
 
 import axios from "axios";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import {
@@ -13,7 +12,6 @@ import {
   verifyOtp,
 } from "@core/services/api/auth.api";
 import { useAuthStore } from "@core/services/stores/auth.store";
-import { AddressBook } from "@components/modules/address/AddressBook";
 
 const normalizeDigits = (value: string) =>
   value
@@ -35,7 +33,6 @@ export function ProfilePanel() {
   const user = useAuthStore((state) => state.user);
   const setAuth = useAuthStore((state) => state.setAuth);
   const setUser = useAuthStore((state) => state.setUser);
-  const logout = useAuthStore((state) => state.logout);
   const [authMode, setAuthMode] = useState<"otp" | "password" | "register">(
     "otp",
   );
@@ -480,17 +477,7 @@ export function ProfilePanel() {
   }
 
   return (
-    <div className="profile-grid">
-      <aside>
-        <span>حساب Oner</span>
-        <b>
-          {user.firstName} {user.lastName}
-        </b>
-        <small dir="ltr">{user.phone}</small>
-        <Link href="/orders">مشاهده سفارش‌های من</Link>
-        <button onClick={logout}>خروج از حساب</button>
-      </aside>
-      <div className="profile-content">
+      <div className="profile-sections">
         <form className="profile-form" onSubmit={save}>
           <h2>
             {user.profileCompleted === false ? "تکمیل اطلاعات" : "اطلاعات شخصی"}
@@ -567,8 +554,6 @@ export function ProfilePanel() {
             {busy ? "در حال ذخیره..." : "ذخیره رمز عبور"}
           </button>
         </form>
-        <AddressBook />
       </div>
-    </div>
   );
 }

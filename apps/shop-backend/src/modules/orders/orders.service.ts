@@ -14,6 +14,7 @@ import { apiEntity } from '../../common/utils/api-entity';
 import { couponDiscount, discountedPrice } from '../../common/utils/pricing';
 import { PrismaService } from '../../database/prisma.service';
 import { ProductsService } from '../products/products.service';
+import { ReservationsService } from '../reservations/reservations.service';
 import { SettingsService } from '../settings/settings.service';
 import { CheckoutDto } from './dto/checkout.dto';
 import {
@@ -41,6 +42,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly products: ProductsService,
+    private readonly reservations: ReservationsService,
     private readonly settings: SettingsService,
   ) {}
 
@@ -306,6 +308,10 @@ export class OrdersService {
           couponCode: appliedCouponCode,
           couponDiscount: appliedCouponDiscount,
           totalAmount: subtotal - appliedCouponDiscount + shippingCost,
+          reservationStatus: 'reserved',
+          reservationExpiresAt: new Date(
+            Date.now() + ReservationsService.lifetimeMs,
+          ),
           notes: dto.notes,
           items: {
             create: cart.items.map((item) => ({
@@ -363,6 +369,7 @@ export class OrdersService {
       search?: string;
     },
   ) {
+    await this.reservations.releaseExpired();
     const where = this.where(filters);
     const [rows, total] = await Promise.all([
       this.prisma.order.findMany({
@@ -414,6 +421,7 @@ export class OrdersService {
     return this.findAll(page, limit, { userId });
   }
   async findById(id: string) {
+    await this.reservations.releaseOrder(id, true);
     const row = await this.prisma.order.findUnique({
       where: { id },
       include: includeOrder,
@@ -472,7 +480,10 @@ export class OrdersService {
         );
       }
 
-      if (dto.status === OrderStatus.CANCELLED) {
+      const releasesInventory =
+        dto.status === OrderStatus.CANCELLED &&
+        row.reservationStatus !== 'released';
+      if (releasesInventory) {
         for (const item of row.items) await this.restoreStock(tx, item);
       }
 
@@ -489,13 +500,15 @@ export class OrdersService {
                 : undefined,
           cancelledAt:
             dto.status === OrderStatus.CANCELLED ? new Date() : undefined,
+          reservationStatus: releasesInventory ? 'released' : undefined,
+          reservationExpiresAt: releasesInventory ? null : undefined,
         },
         include: includeOrder,
       });
       return {
         order,
         restockedProductIds:
-          dto.status === OrderStatus.CANCELLED
+          releasesInventory
             ? [...new Set(row.items.map((item) => item.productId))]
             : [],
       };
@@ -509,6 +522,7 @@ export class OrdersService {
     return this.map(result.order);
   }
   async updatePaymentStatus(id: string, dto: UpdatePaymentStatusDto) {
+    await this.reservations.releaseOrder(id, true);
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Order not found');
     if (!canTransitionPayment(order.paymentStatus, dto.paymentStatus)) {
@@ -524,9 +538,24 @@ export class OrdersService {
         'Cancelled order payment can only be refunded',
       );
     }
+    if (
+      dto.paymentStatus === PaymentStatus.PAID &&
+      order.reservationStatus !== 'reserved' &&
+      order.reservationStatus !== 'committed'
+    ) {
+      throw new BadRequestException(
+        'مهلت رزرو این سفارش تمام شده و امکان ثبت پرداخت وجود ندارد',
+      );
+    }
     await this.prisma.order.update({
       where: { id },
-      data: { paymentStatus: dto.paymentStatus },
+      data: {
+        paymentStatus: dto.paymentStatus,
+        reservationStatus:
+          dto.paymentStatus === PaymentStatus.PAID ? 'committed' : undefined,
+        reservationExpiresAt:
+          dto.paymentStatus === PaymentStatus.PAID ? null : undefined,
+      },
     });
     return this.findById(id);
   }

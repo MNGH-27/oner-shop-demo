@@ -36,6 +36,7 @@ export function CheckoutForm({
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const items = useCartStore((state) => state.items);
+  const clearCart = useCartStore((state) => state.clear);
   const subtotal = useCartStore(selectCartSubtotal);
   const [addresses, setAddresses] = useState<CustomerAddress[]>(
     user?.addresses ?? [],
@@ -167,6 +168,7 @@ export function CheckoutForm({
         couponCode: coupon?.code,
       });
       if (!response.paymentUrl) throw new Error("Missing payment URL");
+      clearCart();
       window.location.assign(response.paymentUrl);
     } catch (error) {
       toast.error(errorMessage(error));

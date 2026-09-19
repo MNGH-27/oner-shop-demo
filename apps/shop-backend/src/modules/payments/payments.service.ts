@@ -14,6 +14,7 @@ import {
 import { randomUUID } from 'crypto';
 import ZarinPal from 'zarinpal-node-sdk';
 import { PrismaService } from '../../database/prisma.service';
+import { ReservationsService } from '../reservations/reservations.service';
 
 type PaymentResult = {
   orderId: string;
@@ -25,6 +26,7 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly reservations: ReservationsService,
   ) {}
 
   private get provider() {
@@ -85,6 +87,12 @@ export class PaymentsService {
   }
 
   async startForOrder(userId: string, orderId: string) {
+    const expired = await this.reservations.releaseOrder(orderId, true);
+    if (expired) {
+      throw new BadRequestException(
+        'مهلت ۲۰ دقیقه‌ای پرداخت تمام شده است؛ لطفاً کالاها را دوباره انتخاب کنید',
+      );
+    }
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
       include: {
@@ -94,7 +102,11 @@ export class PaymentsService {
     });
     if (!order) throw new NotFoundException('سفارش پیدا نشد');
     if (order.status === OrderStatus.cancelled) {
-      throw new BadRequestException('سفارش لغوشده قابل پرداخت نیست');
+      throw new BadRequestException(
+        order.reservationStatus === 'released'
+          ? 'مهلت پرداخت تمام شده است؛ لطفاً کالاها را دوباره انتخاب کنید'
+          : 'سفارش لغوشده قابل پرداخت نیست',
+      );
     }
     if (order.paymentStatus === PaymentStatus.paid) {
       return { paymentUrl: this.resultUrl({ orderId, result: 'success' }) };
@@ -108,10 +120,23 @@ export class PaymentsService {
     }
 
     if (order.totalAmount <= 0) {
-      await this.prisma.order.update({
-        where: { id: order.id },
-        data: { paymentStatus: 'paid', status: 'confirmed' },
+      const committed = await this.prisma.order.updateMany({
+        where: {
+          id: order.id,
+          reservationStatus: 'reserved',
+          reservationExpiresAt: { gt: new Date() },
+        },
+        data: {
+          paymentStatus: 'paid',
+          status: 'confirmed',
+          reservationStatus: 'committed',
+          reservationExpiresAt: null,
+        },
       });
+      if (!committed.count) {
+        await this.reservations.releaseOrder(order.id, true);
+        throw new BadRequestException('مهلت پرداخت تمام شده است');
+      }
       return { paymentUrl: this.resultUrl({ orderId, result: 'success' }) };
     }
 
@@ -208,8 +233,23 @@ export class PaymentsService {
       throw new ForbiddenException('سفارش لغو شده است');
     }
 
-    await this.prisma.$transaction([
-      this.prisma.paymentAttempt.update({
+    const committed = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.order.updateMany({
+        where: {
+          id: attempt.orderId,
+          reservationStatus: 'reserved',
+          reservationExpiresAt: { gt: new Date() },
+          status: { not: OrderStatus.cancelled },
+        },
+        data: {
+          paymentStatus: 'paid',
+          status: OrderStatus.confirmed,
+          reservationStatus: 'committed',
+          reservationExpiresAt: null,
+        },
+      });
+      if (!claimed.count) return false;
+      await tx.paymentAttempt.update({
         where: { id: attempt.id },
         data: {
           status: 'paid',
@@ -218,18 +258,15 @@ export class PaymentsService {
           feeRials: details?.feeRials,
           verifiedAt: new Date(),
         },
-      }),
-      this.prisma.order.update({
-        where: { id: attempt.orderId },
-        data: {
-          paymentStatus: 'paid',
-          status:
-            attempt.order.status === OrderStatus.pending
-              ? OrderStatus.confirmed
-              : undefined,
-        },
-      }),
-    ]);
+      });
+      return true;
+    });
+    if (!committed) {
+      await this.reservations.releaseOrder(attempt.orderId, true);
+      throw new ForbiddenException(
+        'مهلت ۲۰ دقیقه‌ای پرداخت تمام شده است',
+      );
+    }
     return { orderId: attempt.orderId, result: 'success' as const };
   }
 

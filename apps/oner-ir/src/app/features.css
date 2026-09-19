@@ -1136,6 +1136,15 @@
   border-radius: 50%;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
+.color-swatch-empty {
+  background-image: linear-gradient(
+    135deg,
+    transparent 44%,
+    rgba(120, 112, 99, 0.45) 45%,
+    rgba(120, 112, 99, 0.45) 55%,
+    transparent 56%
+  );
+}
 .description-empty {
   padding: 25px 0;
   color: var(--muted);

@@ -73,6 +73,7 @@ type FormState = {
   discountPercent: string;
   lowStockThreshold: string;
   colors: string[];
+  colorHexes: Record<string, string>;
   sizes: string[];
   relatedProducts: string[];
   isActive: boolean;
@@ -89,13 +90,14 @@ const emptyForm: FormState = {
   discountPercent: "0",
   lowStockThreshold: "",
   colors: [],
+  colorHexes: {},
   sizes: [],
   relatedProducts: [],
   isActive: true,
 };
 
-function parseColors(value: string[]) {
-  return value.map((name) => ({ name }));
+function parseColors(value: string[], hexes: Record<string, string>) {
+  return value.map((name) => ({ name, hex: hexes[name] }));
 }
 
 function parseSizes(value: string[]) {
@@ -175,6 +177,7 @@ export function ProductsPage({
   const [priceValue, setPriceValue] = useState("");
   const [formVariants, setFormVariants] = useState<VariantForm[]>([]);
   const [colorInput, setColorInput] = useState("");
+  const [colorHexInput, setColorHexInput] = useState("#d8c4a8");
   const [sizeInput, setSizeInput] = useState("");
   const [variantColor, setVariantColor] = useState("");
   const [variantSize, setVariantSize] = useState("");
@@ -228,7 +231,7 @@ export function ProductsPage({
           images: form.images,
           discountPercent: Number(form.discountPercent) || 0,
           lowStockThreshold: parseThreshold(form.lowStockThreshold),
-          colors: parseColors(form.colors),
+          colors: parseColors(form.colors, form.colorHexes),
           sizeType: inferSizeType(form.sizes),
           sizes: parseSizes(form.sizes),
           isActive: form.isActive,
@@ -248,7 +251,7 @@ export function ProductsPage({
           discountPercent: Number(form.discountPercent) || 0,
           stock: Number(form.stock) || 0,
           lowStockThreshold: parseThreshold(form.lowStockThreshold),
-          colors: parseColors(form.colors),
+          colors: parseColors(form.colors, form.colorHexes),
           sizeType: inferSizeType(form.sizes),
           sizes: parseSizes(form.sizes),
           isActive: form.isActive,
@@ -312,6 +315,7 @@ export function ProductsPage({
     setFormError(null);
     setFieldErrors({});
     setColorInput("");
+    setColorHexInput("#d8c4a8");
     setSizeInput("");
     setVariantColor("");
     setVariantSize("");
@@ -340,6 +344,12 @@ export function ProductsPage({
           ? ""
           : String(product.lowStockThreshold),
       colors: (product.colors ?? []).map((color) => color.name),
+      colorHexes: Object.fromEntries(
+        (product.colors ?? []).map((color) => [
+          color.name,
+          color.hex ?? "#d8c4a8",
+        ]),
+      ),
       sizes: (product.sizes ?? []).map((size) => size.label),
       relatedProducts: (product.relatedProducts ?? []).map((item) =>
         typeof item === "string" ? item : item._id,
@@ -349,6 +359,7 @@ export function ProductsPage({
     setFormError(null);
     setFieldErrors({});
     setColorInput("");
+    setColorHexInput("#d8c4a8");
     setSizeInput("");
     setVariantColor("");
     setVariantSize("");
@@ -389,8 +400,19 @@ export function ProductsPage({
       return;
     const colors = kind === "color" ? [...form.colors, value] : form.colors;
     const sizes = kind === "size" ? [...form.sizes, value] : form.sizes;
-    setForm((state) => ({ ...state, colors, sizes }));
-    if (kind === "color") setColorInput("");
+    setForm((state) => ({
+      ...state,
+      colors,
+      sizes,
+      colorHexes:
+        kind === "color"
+          ? { ...state.colorHexes, [value]: colorHexInput.toUpperCase() }
+          : state.colorHexes,
+    }));
+    if (kind === "color") {
+      setColorInput("");
+      setColorHexInput("#d8c4a8");
+    }
     else setSizeInput("");
   }
 
@@ -403,7 +425,12 @@ export function ProductsPage({
       kind === "size"
         ? form.sizes.filter((item) => item !== value)
         : form.sizes;
-    setForm((state) => ({ ...state, colors, sizes }));
+    setForm((state) => {
+      if (kind !== "color") return { ...state, colors, sizes };
+      const colorHexes = { ...state.colorHexes };
+      delete colorHexes[value];
+      return { ...state, colors, sizes, colorHexes };
+    });
     setFormVariants((current) =>
       current.filter((item) =>
         kind === "color" ? item.color !== value : item.size !== value,
@@ -821,13 +848,24 @@ export function ProductsPage({
             hint="اختیاری؛ برای محصول ساده رنگ و سایز را خالی بگذارید."
             error={fieldErrors.colors}
           >
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Input
                 value={colorInput}
                 onChange={(e) => setColorInput(e.target.value)}
                 onKeyDown={(e) => addOnEnter(e, "color")}
                 placeholder="مثلاً کرم"
               />
+              <label className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-2 text-xs text-muted">
+                پالت
+                <input
+                  type="color"
+                  value={colorHexInput}
+                  onChange={(event) => setColorHexInput(event.target.value)}
+                  className="h-7 w-9 cursor-pointer border-0 bg-transparent p-0"
+                  aria-label="انتخاب رنگ جدید"
+                />
+                <span dir="ltr">{colorHexInput.toUpperCase()}</span>
+              </label>
               <Button
                 type="button"
                 variant="secondary"
@@ -843,7 +881,26 @@ export function ProductsPage({
                     key={color}
                     className="inline-flex items-center gap-2 rounded-full bg-bg-soft px-3 py-1 text-sm"
                   >
+                    <input
+                      type="color"
+                      value={form.colorHexes[color] ?? "#d8c4a8"}
+                      onChange={(event) =>
+                        setForm((state) => ({
+                          ...state,
+                          colorHexes: {
+                            ...state.colorHexes,
+                            [color]: event.target.value.toUpperCase(),
+                          },
+                        }))
+                      }
+                      className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0"
+                      aria-label={`انتخاب پالت رنگ ${color}`}
+                      title={`پالت رنگ ${color}`}
+                    />
                     <span>{color}</span>
+                    <code className="text-[10px] text-muted" dir="ltr">
+                      {form.colorHexes[color] ?? "#D8C4A8"}
+                    </code>
                     <button
                       type="button"
                       className="text-danger"

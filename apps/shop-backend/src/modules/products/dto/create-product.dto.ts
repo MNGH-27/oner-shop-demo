@@ -14,6 +14,7 @@ import {
   ValidateNested,
   IsEnum,
   ArrayMaxSize,
+  Matches,
 } from 'class-validator';
 import { ProductSizeType } from '../product.types';
 import { ProductVariantStockDto } from './update-product-stock.dto';
@@ -25,6 +26,9 @@ export class ProductColorDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/^#[0-9a-fA-F]{6}$/, {
+    message: 'کد رنگ باید با فرمت HEX مانند #D8C4A8 باشد',
+  })
   hex?: string;
 }
 

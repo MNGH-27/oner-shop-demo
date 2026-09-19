@@ -241,7 +241,10 @@ export class ProductsService {
   async create(dto: CreateProductDto) {
     await this.requireCategory(dto.category);
     await this.assertRelated(dto.relatedProducts);
-    const colors = dto.colors ?? [];
+    const colors = (dto.colors ?? []).map(({ name, hex }) => ({
+      name,
+      ...(hex ? { hex: hex.toUpperCase() } : {}),
+    }));
     const sizes = dto.sizes ?? [];
     const variants = dto.variants ?? [];
     this.validateVariants(colors, sizes, variants);
@@ -422,7 +425,9 @@ export class ProductsService {
         const savedHex = currentColors.find((item) => item.name === name)?.hex;
         return {
           name,
-          ...(hex || savedHex ? { hex: hex ?? savedHex } : {}),
+          ...(hex || savedHex
+            ? { hex: (hex ?? savedHex)?.toUpperCase() }
+            : {}),
         };
       }),
       sizeType: dto.sizeType,

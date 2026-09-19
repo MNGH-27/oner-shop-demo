@@ -21,6 +21,7 @@ ENV PORT=5000
 COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/shop-backend/package.json ./apps/shop-backend/package.json
+COPY --from=build /app/apps/shop-backend/node_modules ./apps/shop-backend/node_modules
 COPY --from=build /app/apps/shop-backend/dist ./apps/shop-backend/dist
 COPY --from=build /app/apps/shop-backend/prisma ./apps/shop-backend/prisma
 COPY --from=build /app/apps/shop-backend/uploads ./apps/shop-backend/uploads

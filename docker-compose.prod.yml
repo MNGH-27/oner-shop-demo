@@ -2,7 +2,7 @@ name: oner-shop
 
 services:
   database:
-    image: ${IMAGE_PREFIX:-oner-shop}/postgres:16-alpine
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
     restart: unless-stopped
     environment:
       POSTGRES_DB: oner_shop

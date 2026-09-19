@@ -46,12 +46,6 @@ export class UpdateProductDto {
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  shippingCost?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
   @Max(100)
   discountPercent?: number;
 

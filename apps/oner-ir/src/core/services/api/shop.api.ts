@@ -4,6 +4,7 @@ import type {
   StoreCategory,
   StoreCategoryNode,
   StoreProduct,
+  ShopSettings,
 } from "@core/types/shop.types";
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:5000/api";
@@ -24,14 +25,19 @@ const fallbackProducts: StoreProduct[] = [
     name: "روانداز موسلین چهارلایه",
     description: "روانداز لطیف و تنفس‌پذیر برای خواب آرام کودک",
     price: 890000,
-    shippingCost: 50000,
     images: ["/uploads/seed-product-1.jpg"],
     category: { _id: "demo-cat-1", name: "روانداز" },
     stock: 12,
-    colors: [{ name: "کرم" }, { name: "سبز سدری" }],
+    colors: [
+      { name: "کرم", hex: "#D8C4A8" },
+      { name: "سبز سدری", hex: "#A8B29A" },
+    ],
     sizeType: "dimension",
     sizes: [{ label: "120×80", widthCm: 120, lengthCm: 80 }],
-    variants: [],
+    variants: [
+      { color: "کرم", size: "120×80", stock: 6 },
+      { color: "سبز سدری", size: "120×80", stock: 6 },
+    ],
     isActive: true,
   },
   {
@@ -39,14 +45,21 @@ const fallbackProducts: StoreProduct[] = [
     name: "ست رختخواب کودک",
     description: "ست خواب مینیمال با پارچه طبیعی و دوخت ظریف",
     price: 2450000,
-    shippingCost: 50000,
     images: ["/uploads/seed-product-2.jpg"],
     category: { _id: "demo-cat-2", name: "ست رختخواب" },
     stock: 8,
-    colors: [{ name: "شیری" }, { name: "طوسی روشن" }],
+    colors: [
+      { name: "شیری", hex: "#F2EBDD" },
+      { name: "طوسی روشن", hex: "#C9CBC8" },
+    ],
     sizeType: "letter",
     sizes: [{ label: "نوزاد" }, { label: "کودک" }],
-    variants: [],
+    variants: [
+      { color: "شیری", size: "نوزاد", stock: 2 },
+      { color: "شیری", size: "کودک", stock: 2 },
+      { color: "طوسی روشن", size: "نوزاد", stock: 2 },
+      { color: "طوسی روشن", size: "کودک", stock: 2 },
+    ],
     isActive: true,
   },
   {
@@ -54,14 +67,19 @@ const fallbackProducts: StoreProduct[] = [
     name: "پتو بافت کودک",
     description: "بافت سبک، گرم و سازگار با پوست حساس کودک",
     price: 1190000,
-    shippingCost: 50000,
     images: ["/uploads/seed-product-3.jpg"],
     category: { _id: "demo-cat-3", name: "پتو و بافت" },
     stock: 15,
-    colors: [{ name: "بژ" }, { name: "قهوه‌ای روشن" }],
+    colors: [
+      { name: "بژ", hex: "#CDBA9B" },
+      { name: "قهوه‌ای روشن", hex: "#A98B70" },
+    ],
     sizeType: "dimension",
     sizes: [{ label: "100×80", widthCm: 100, lengthCm: 80 }],
-    variants: [],
+    variants: [
+      { color: "بژ", size: "100×80", stock: 8 },
+      { color: "قهوه‌ای روشن", size: "100×80", stock: 7 },
+    ],
     isActive: true,
   },
   {
@@ -69,14 +87,19 @@ const fallbackProducts: StoreProduct[] = [
     name: "بالش چین‌دار کودک",
     description: "بالش نرم و تزئینی با لبه چین‌دار دست‌دوز",
     price: 520000,
-    shippingCost: 50000,
     images: ["/uploads/seed-product-4.jpg"],
     category: { _id: "demo-cat-2", name: "ست رختخواب" },
     stock: 20,
-    colors: [{ name: "سفید" }, { name: "سبز روشن" }],
+    colors: [
+      { name: "سفید", hex: "#F8F7F2" },
+      { name: "سبز روشن", hex: "#B9C7AD" },
+    ],
     sizeType: "dimension",
     sizes: [{ label: "40×30", widthCm: 40, lengthCm: 30 }],
-    variants: [],
+    variants: [
+      { color: "سفید", size: "40×30", stock: 10 },
+      { color: "سبز روشن", size: "40×30", stock: 10 },
+    ],
     isActive: true,
   },
 ];
@@ -140,6 +163,9 @@ export async function getProducts(params?: {
 }
 export async function getBanners(): Promise<StoreBanner[]> {
   return (await safeFetch<StoreBanner[]>("/banners")) ?? [];
+}
+export async function getShopSettings(): Promise<ShopSettings | null> {
+  return safeFetch<ShopSettings>("/settings");
 }
 export async function getProduct(id: string): Promise<StoreProduct | null> {
   const result = await safeFetch<StoreProduct>(`/products/${id}`);

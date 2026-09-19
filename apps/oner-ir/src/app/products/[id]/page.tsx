@@ -79,7 +79,7 @@ export default async function ProductPage({
           <div className="detail-meta">
             <span>پارچه لطیف و مناسب کودک</span>
             <span>ارسال به سراسر ایران</span>
-            <span>هزینه ارسال: {formatPrice(product.shippingCost)}</span>
+            <span>هزینه ارسال فقط یک‌بار برای کل سفارش محاسبه می‌شود</span>
           </div>
         </div>
       </div>

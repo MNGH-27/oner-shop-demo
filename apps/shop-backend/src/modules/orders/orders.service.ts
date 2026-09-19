@@ -14,6 +14,7 @@ import { apiEntity } from '../../common/utils/api-entity';
 import { couponDiscount, discountedPrice } from '../../common/utils/pricing';
 import { PrismaService } from '../../database/prisma.service';
 import { ProductsService } from '../products/products.service';
+import { SettingsService } from '../settings/settings.service';
 import { CheckoutDto } from './dto/checkout.dto';
 import {
   UpdateOrderStatusDto,
@@ -40,6 +41,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly products: ProductsService,
+    private readonly settings: SettingsService,
   ) {}
 
   private isWriteConflict(error: unknown): boolean {
@@ -206,6 +208,7 @@ export class OrdersService {
       );
     }
 
+    const shippingCost = await this.settings.getShippingCost();
     const result = await this.serializableTransaction(async (tx) => {
       const cart = await tx.cart.findUnique({
         where: { userId },
@@ -245,12 +248,6 @@ export class OrdersService {
           coupon.maximumDiscountAmount,
         );
       }
-
-      // Shipping is authoritative server data; a customer-provided value is ignored.
-      const shippingCost = Math.max(
-        0,
-        ...cart.items.map((item) => item.product.shippingCost),
-      );
 
       let selectedAddress;
       if (dto.addressId) {

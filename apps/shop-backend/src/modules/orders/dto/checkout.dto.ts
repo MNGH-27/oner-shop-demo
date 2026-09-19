@@ -1,11 +1,9 @@
 import { Type } from 'class-transformer';
 import {
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
-  Min,
   ValidateNested,
 } from 'class-validator';
 import { CreateAddressDto } from '../../addresses/dto/address.dto';
@@ -19,12 +17,6 @@ export class CheckoutDto {
   @ValidateNested()
   @Type(() => CreateAddressDto)
   shippingAddress?: CreateAddressDto;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  shippingCost?: number;
 
   @IsOptional()
   @IsString()

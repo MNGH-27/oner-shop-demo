@@ -28,7 +28,6 @@ export interface Product {
   descriptionHtml?: string
   price: number
   discountPercent: number
-  shippingCost: number
   images: string[]
   category: MongoId | CategoryRef
   stock: number
@@ -51,7 +50,6 @@ export interface CreateProductPayload {
   descriptionHtml?: string
   price?: number
   discountPercent?: number
-  shippingCost?: number
   images?: string[]
   category: MongoId
   stock?: number
@@ -71,7 +69,6 @@ export interface UpdateProductPayload {
   descriptionHtml?: string
   images?: string[]
   category?: MongoId
-  shippingCost?: number
   discountPercent?: number
   colors?: ProductColor[]
   sizeType?: ProductSizeType
@@ -104,5 +101,5 @@ export interface ProductsQuery extends PaginationQuery {
 }
 
 export interface ShopSettings {
-  defaultShippingCost: number
+  shippingCost: number
 }

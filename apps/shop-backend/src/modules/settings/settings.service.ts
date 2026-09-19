@@ -11,12 +11,12 @@ export class SettingsService implements OnModuleInit {
     return this.prisma.setting.upsert({
       where: { key: 'shop' },
       update: {},
-      create: { key: 'shop', defaultShippingCost: 50000 },
+      create: { key: 'shop', shippingCost: 50000 },
     });
   }
   async get() {
     const value = await this.getOrCreate();
-    return { defaultShippingCost: value.defaultShippingCost };
+    return { shippingCost: value.shippingCost };
   }
   async update(dto: UpdateSettingsDto) {
     const value = await this.prisma.setting.upsert({
@@ -24,9 +24,9 @@ export class SettingsService implements OnModuleInit {
       update: dto,
       create: { key: 'shop', ...dto },
     });
-    return { defaultShippingCost: value.defaultShippingCost };
+    return { shippingCost: value.shippingCost };
   }
-  async getDefaultShippingCost() {
-    return (await this.getOrCreate()).defaultShippingCost;
+  async getShippingCost() {
+    return (await this.getOrCreate()).shippingCost;
   }
 }

@@ -5,5 +5,5 @@ export class UpdateSettingsDto {
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  defaultShippingCost: number;
+  shippingCost: number;
 }

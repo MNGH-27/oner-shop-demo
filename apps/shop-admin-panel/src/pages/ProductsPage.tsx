@@ -18,7 +18,6 @@ import {
   updateProduct,
   updateProductPrice,
 } from "../api/products";
-import { fetchSettings } from "../api/settings";
 import {
   Alert,
   Badge,
@@ -72,7 +71,6 @@ type FormState = {
   price: string;
   stock: string;
   discountPercent: string;
-  shippingCost: string;
   lowStockThreshold: string;
   colors: string[];
   sizes: string[];
@@ -89,7 +87,6 @@ const emptyForm: FormState = {
   price: "",
   stock: "0",
   discountPercent: "0",
-  shippingCost: "0",
   lowStockThreshold: "",
   colors: [],
   sizes: [],
@@ -229,7 +226,6 @@ export function ProductsPage({
           descriptionHtml: form.descriptionHtml || undefined,
           category: form.category,
           images: form.images,
-          shippingCost: Number(form.shippingCost) || 0,
           discountPercent: Number(form.discountPercent) || 0,
           lowStockThreshold: parseThreshold(form.lowStockThreshold),
           colors: parseColors(form.colors),
@@ -249,7 +245,6 @@ export function ProductsPage({
           category: form.category,
           images: form.images,
           price: Number(form.price) || 0,
-          shippingCost: Number(form.shippingCost) || 0,
           discountPercent: Number(form.discountPercent) || 0,
           stock: Number(form.stock) || 0,
           lowStockThreshold: parseThreshold(form.lowStockThreshold),
@@ -321,15 +316,7 @@ export function ProductsPage({
     setVariantColor("");
     setVariantSize("");
     setFormVariants([]);
-    try {
-      const settings = await fetchSettings();
-      setForm({
-        ...emptyForm,
-        shippingCost: String(settings.defaultShippingCost ?? 0),
-      });
-    } catch {
-      setForm(emptyForm);
-    }
+    setForm(emptyForm);
     setModalOpen(true);
   }
 
@@ -347,7 +334,6 @@ export function ProductsPage({
       price: String(product.price),
       stock: String(product.stock ?? 0),
       discountPercent: String(product.discountPercent ?? 0),
-      shippingCost: String(product.shippingCost ?? 0),
       lowStockThreshold:
         product.lowStockThreshold === null ||
         product.lowStockThreshold === undefined
@@ -607,7 +593,6 @@ export function ProductsPage({
                   <th className="px-4 py-3 font-semibold">محصول</th>
                   <th className="px-4 py-3 font-semibold">دسته</th>
                   <th className="px-4 py-3 font-semibold">قیمت</th>
-                  <th className="px-4 py-3 font-semibold">هزینه ارسال</th>
                   <th className="px-4 py-3 font-semibold">موجودی</th>
                   <th className="px-4 py-3 font-semibold">وضعیت</th>
                   <th className="px-4 py-3 font-semibold">عملیات</th>
@@ -646,9 +631,6 @@ export function ProductsPage({
                             {formatNumber(product.discountPercent)}٪ تخفیف
                           </div>
                         ) : null}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {formatPrice(product.shippingCost)}
                       </td>
                       <td className="px-4 py-3">
                         <div>{formatNumber(product.stock)}</div>
@@ -793,15 +775,6 @@ export function ProductsPage({
               placeholder="مثلاً ۵"
               dir="ltr"
               aria-invalid={Boolean(fieldErrors.lowStockThreshold)}
-            />
-          </Field>
-          <Field label="هزینه ارسال (تومان)" error={fieldErrors.shippingCost}>
-            <PriceInput
-              value={form.shippingCost}
-              onValueChange={(shippingCost) =>
-                setForm((f) => ({ ...f, shippingCost }))
-              }
-              aria-invalid={Boolean(fieldErrors.shippingCost)}
             />
           </Field>
           <Field

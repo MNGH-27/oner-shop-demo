@@ -73,13 +73,6 @@ export class CreateProductDto {
   @Max(100)
   discountPercent?: number;
 
-  /** اگر خالی باشد از هزینه ارسال پیش‌فرض فروشگاه استفاده می‌شود */
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  shippingCost?: number;
-
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

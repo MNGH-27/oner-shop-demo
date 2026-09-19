@@ -122,7 +122,6 @@ model Product {
   descriptionHtml   String           @default("")
   price             Int              @default(0)
   discountPercent   Int              @default(0)
-  shippingCost      Int              @default(0)
   images            String[]
   categoryId        String           @db.Uuid
   category          Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
@@ -264,10 +263,10 @@ model Coupon {
 }
 
 model Setting {
-  key                 String   @id @default("shop")
-  defaultShippingCost Int      @default(50000)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  key          String   @id @default("shop")
+  shippingCost Int      @default(50000)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model ContactMessage {

@@ -8,7 +8,6 @@ import { Prisma, Product, ProductVariant } from '@prisma/client';
 import sanitizeHtml from 'sanitize-html';
 import { apiEntity } from '../../common/utils/api-entity';
 import { PrismaService } from '../../database/prisma.service';
-import { SettingsService } from '../settings/settings.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -25,7 +24,6 @@ type RelatedProduct = FullProduct['relatedProducts'][number];
 export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly settings: SettingsService,
     private readonly telegram: TelegramService,
     private readonly config: ConfigService,
   ) {}
@@ -243,8 +241,6 @@ export class ProductsService {
   async create(dto: CreateProductDto) {
     await this.requireCategory(dto.category);
     await this.assertRelated(dto.relatedProducts);
-    const shipping =
-      dto.shippingCost ?? (await this.settings.getDefaultShippingCost());
     const colors = dto.colors ?? [];
     const sizes = dto.sizes ?? [];
     const variants = dto.variants ?? [];
@@ -256,7 +252,6 @@ export class ProductsService {
         descriptionHtml: this.sanitize(dto.descriptionHtml),
         price: dto.price ?? 0,
         discountPercent: dto.discountPercent ?? 0,
-        shippingCost: shipping,
         images: dto.images ?? [],
         categoryId: dto.category,
         stock: variants.length
@@ -398,6 +393,10 @@ export class ProductsService {
     const effectiveColors = (dto.colors ?? current.colors) as Array<{
       name: string;
     }>;
+    const currentColors = current.colors as Array<{
+      name: string;
+      hex?: string;
+    }>;
     const effectiveSizes = (dto.sizes ?? current.sizes) as Array<{
       label: string;
     }>;
@@ -416,14 +415,16 @@ export class ProductsService {
         dto.descriptionHtml === undefined
           ? undefined
           : this.sanitize(dto.descriptionHtml),
-      shippingCost: dto.shippingCost,
       discountPercent: dto.discountPercent,
       images: dto.images,
       category: dto.category ? { connect: { id: dto.category } } : undefined,
-      colors: dto.colors?.map(({ name, hex }) => ({
-        name,
-        ...(hex ? { hex } : {}),
-      })),
+      colors: dto.colors?.map(({ name, hex }) => {
+        const savedHex = currentColors.find((item) => item.name === name)?.hex;
+        return {
+          name,
+          ...(hex || savedHex ? { hex: hex ?? savedHex } : {}),
+        };
+      }),
       sizeType: dto.sizeType,
       sizes: dto.sizes?.map(({ label, widthCm, lengthCm }) => ({
         label,

@@ -58,7 +58,6 @@ export const productSchema = (editing: boolean) => z.object({
   images: z.array(z.string()).min(1, 'حداقل یک تصویر برای محصول انتخاب کنید.').max(10, 'حداکثر ۱۰ تصویر مجاز است.'),
   price: numericString('قیمت', { min: 0, integer: true, optional: editing }),
   stock: numericString('موجودی', { min: 0, integer: true }),
-  shippingCost: numericString('هزینه ارسال', { min: 0, integer: true }),
   discountPercent: numericString('درصد تخفیف', { min: 0, max: 100, integer: true }),
   lowStockThreshold: numericString('آستانه اعلان موجودی', { min: 0, integer: true, optional: true }),
   colors: z.array(z.string().trim().min(1)),
@@ -74,7 +73,7 @@ export const stockSchema = z.object({
   stock: numericString('موجودی', { min: 0, integer: true }),
   lowStockThreshold: numericString('آستانه اعلان موجودی', { min: 0, integer: true, optional: true }),
 })
-export const settingsSchema = z.object({ defaultShippingCost: numericString('هزینه ارسال', { min: 0, integer: true }) })
+export const settingsSchema = z.object({ shippingCost: numericString('هزینه ارسال', { min: 0, integer: true }) })
 export const orderStatusSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'], { message: 'یک وضعیت معتبر انتخاب کنید.' }),
   notes: z.string().trim().max(1000, 'یادداشت نباید بیشتر از ۱۰۰۰ کاراکتر باشد.'),

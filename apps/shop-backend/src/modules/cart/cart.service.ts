@@ -104,7 +104,6 @@ export class CartService {
           name: i.product.name,
           price: i.product.price,
           discountPercent: i.product.discountPercent,
-          shippingCost: i.product.shippingCost,
           images: i.product.images,
           stock: v?.stock ?? i.product.stock,
           isActive: i.product.isActive,

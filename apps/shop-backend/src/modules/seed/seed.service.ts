@@ -54,7 +54,7 @@ export class SeedService implements OnModuleInit {
     await this.prisma.setting.upsert({
       where: { key: 'shop' },
       update: {},
-      create: { key: 'shop', defaultShippingCost: 50000 },
+      create: { key: 'shop', shippingCost: 50000 },
     });
     const syncCategory = async (input: {
       name: string;
@@ -130,10 +130,24 @@ export class SeedService implements OnModuleInit {
         images: ['/uploads/oner-product-3.jpg'],
         categoryId: bedding.id,
         stock: 24,
-        colors: [],
-        sizes: [{ label: '۱۲۰ × ۸۰' }],
+        colors: [
+          { name: 'شیری', hex: '#F2EBDD' },
+          { name: 'سبز سدری', hex: '#A8B29A' },
+          { name: 'گلبهی ملایم', hex: '#DDB9B2' },
+        ],
+        sizes: [
+          { label: 'نوزاد ۱۲۰ × ۸۰', widthCm: 120, lengthCm: 80 },
+          { label: 'کودک ۱۴۰ × ۱۰۰', widthCm: 140, lengthCm: 100 },
+        ],
         sizeType: 'dimension',
-        variants: [],
+        variants: [
+          { color: 'شیری', size: 'نوزاد ۱۲۰ × ۸۰', stock: 5 },
+          { color: 'شیری', size: 'کودک ۱۴۰ × ۱۰۰', stock: 3 },
+          { color: 'سبز سدری', size: 'نوزاد ۱۲۰ × ۸۰', stock: 5 },
+          { color: 'سبز سدری', size: 'کودک ۱۴۰ × ۱۰۰', stock: 3 },
+          { color: 'گلبهی ملایم', size: 'نوزاد ۱۲۰ × ۸۰', stock: 5 },
+          { color: 'گلبهی ملایم', size: 'کودک ۱۴۰ × ۱۰۰', stock: 3 },
+        ],
       },
       {
         name: 'قنداق موسلین نوزاد',
@@ -143,7 +157,10 @@ export class SeedService implements OnModuleInit {
         images: ['/uploads/oner-product-2.jpg'],
         categoryId: clothing.id,
         stock: 36,
-        colors: [{ name: 'کرم' }, { name: 'سفید' }],
+        colors: [
+          { name: 'کرم', hex: '#D8C4A8' },
+          { name: 'سفید', hex: '#F8F7F2' },
+        ],
         sizes: [{ label: '۰ تا ۶ ماه' }, { label: '۶ تا ۱۲ ماه' }],
         sizeType: 'letter',
         variants: [
@@ -161,7 +178,10 @@ export class SeedService implements OnModuleInit {
         images: ['/uploads/oner-product-4.jpg'],
         categoryId: clothing.id,
         stock: 28,
-        colors: [{ name: 'شیری' }, { name: 'سبز سدری' }],
+        colors: [
+          { name: 'شیری', hex: '#F2EBDD' },
+          { name: 'سبز سدری', hex: '#A8B29A' },
+        ],
         sizes: [{ label: '۱ تا ۲ سال' }, { label: '۲ تا ۳ سال' }],
         sizeType: 'letter',
         variants: [
@@ -179,10 +199,18 @@ export class SeedService implements OnModuleInit {
         images: ['/uploads/oner-product-1.jpg'],
         categoryId: bedding.id,
         stock: 32,
-        colors: [],
+        colors: [
+          { name: 'شیری', hex: '#F2EBDD' },
+          { name: 'بژ', hex: '#CDBA9B' },
+          { name: 'سبز سدری', hex: '#A8B29A' },
+        ],
         sizes: [{ label: '۴۰ × ۳۰' }],
         sizeType: 'dimension',
-        variants: [],
+        variants: [
+          { color: 'شیری', size: '۴۰ × ۳۰', stock: 12 },
+          { color: 'بژ', size: '۴۰ × ۳۰', stock: 10 },
+          { color: 'سبز سدری', size: '۴۰ × ۳۰', stock: 10 },
+        ],
       },
       {
         name: 'ست کامل خواب موسلین کودک',
@@ -197,10 +225,21 @@ export class SeedService implements OnModuleInit {
         ],
         categoryId: bedding.id,
         stock: 14,
-        colors: [],
-        sizes: [{ label: 'تخت کودک ۱۳۰ × ۷۰' }],
+        colors: [
+          { name: 'شیری', hex: '#F2EBDD' },
+          { name: 'طوسی روشن', hex: '#C9CBC8' },
+        ],
+        sizes: [
+          { label: 'تخت نوزاد ۱۲۰ × ۶۰', widthCm: 120, lengthCm: 60 },
+          { label: 'تخت کودک ۱۳۰ × ۷۰', widthCm: 130, lengthCm: 70 },
+        ],
         sizeType: 'dimension',
-        variants: [],
+        variants: [
+          { color: 'شیری', size: 'تخت نوزاد ۱۲۰ × ۶۰', stock: 4 },
+          { color: 'شیری', size: 'تخت کودک ۱۳۰ × ۷۰', stock: 3 },
+          { color: 'طوسی روشن', size: 'تخت نوزاد ۱۲۰ × ۶۰', stock: 4 },
+          { color: 'طوسی روشن', size: 'تخت کودک ۱۳۰ × ۷۰', stock: 3 },
+        ],
       },
     ];
     const products = [];
@@ -217,7 +256,6 @@ export class SeedService implements OnModuleInit {
         name: spec.name,
         description: spec.description,
         price: spec.price,
-        shippingCost: 50000,
         images: spec.images,
         categoryId: spec.categoryId,
         stock: spec.stock,

@@ -25,3 +25,14 @@ export class SettingsController {
     return this.settingsService.update(dto);
   }
 }
+
+@ApiTags('Store - Settings')
+@Controller('settings')
+export class StoreSettingsController {
+  constructor(private readonly settingsService: SettingsService) {}
+
+  @Get()
+  get() {
+    return this.settingsService.get();
+  }
+}

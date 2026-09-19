@@ -22,7 +22,6 @@ export interface StoreProduct {
   descriptionHtml?: string;
   price: number;
   discountPercent?: number;
-  shippingCost: number;
   images: string[];
   category: { _id: string; name: string } | string;
   stock: number;
@@ -64,6 +63,9 @@ export interface StoreBanner {
   title: string;
   subtitle?: string;
   image: string;
+}
+export interface ShopSettings {
+  shippingCost: number;
 }
 export interface Customer {
   id: string;

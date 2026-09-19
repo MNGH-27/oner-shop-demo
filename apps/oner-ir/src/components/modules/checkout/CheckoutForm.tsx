@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { AddressFields } from "@components/modules/address/AddressFields";
 import { getAddresses } from "@core/services/api/address.api";
 import { checkout, replaceRemoteCart } from "@core/services/api/order.api";
+import { getShopSettings } from "@core/services/api/shop.api";
 import { apiClient } from "@core/services/http/api-client";
 import {
   selectCartSubtotal,
@@ -47,10 +48,17 @@ export function CheckoutForm({
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
   const [couponError, setCouponError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const shippingCost = Math.max(
-    0,
-    ...items.map((item) => item.product.shippingCost ?? 0),
-  );
+  const [shippingCost, setShippingCost] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void getShopSettings().then((settings) => {
+      if (active) setShippingCost(settings?.shippingCost ?? null);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!initialCoupon || !subtotal) return;
@@ -269,7 +277,13 @@ export function CheckoutForm({
         </p>
         <p>
           <span>ارسال</span>
-          <b>{shippingCost ? formatPrice(shippingCost) : "رایگان"}</b>
+          <b>
+            {shippingCost === null
+              ? "در حال محاسبه…"
+              : shippingCost
+                ? formatPrice(shippingCost)
+                : "رایگان"}
+          </b>
         </p>
         {coupon ? (
           <p className="coupon-discount">
@@ -282,7 +296,11 @@ export function CheckoutForm({
         ) : null}
         <div className="checkout-total">
           <span>مبلغ قابل پرداخت</span>
-          <b>{formatPrice(Math.max(0, subtotal + shippingCost - discount))}</b>
+          <b>
+            {shippingCost === null
+              ? "پس از محاسبه ارسال"
+              : formatPrice(Math.max(0, subtotal + shippingCost - discount))}
+          </b>
         </div>
         <div className="checkout-payment">
           <CreditCard size={20} />
@@ -295,7 +313,10 @@ export function CheckoutForm({
           قیمت، موجودی، هزینه ارسال و تخفیف پیش از اتصال به درگاه دوباره بررسی
           می‌شوند.
         </small>
-        <button className="primary-btn" disabled={submitting}>
+        <button
+          className="primary-btn"
+          disabled={submitting || shippingCost === null}
+        >
           {submitting ? "در حال اتصال به درگاه..." : "پرداخت و ثبت سفارش"}
         </button>
       </aside>

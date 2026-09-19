@@ -3,9 +3,9 @@
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { mediaUrl } from "@core/services/api/shop.api";
+import { getShopSettings, mediaUrl } from "@core/services/api/shop.api";
 import { apiClient } from "@core/services/http/api-client";
 import {
   cartItemAvailableStock,
@@ -23,6 +23,17 @@ export default function CartPage() {
   const [code, setCode] = useState("");
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
   const [validating, setValidating] = useState(false);
+  const [shippingCost, setShippingCost] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void getShopSettings().then((settings) => {
+      if (active) setShippingCost(settings?.shippingCost ?? null);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
   const originalSubtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
@@ -196,7 +207,13 @@ export default function CartPage() {
             </div>
             <p>
               <span>هزینه ارسال</span>
-              <span>در مرحله ثبت آدرس نمایش داده می‌شود</span>
+              <b>
+                {shippingCost === null
+                  ? "در حال محاسبه…"
+                  : shippingCost
+                    ? formatPrice(shippingCost)
+                    : "رایگان"}
+              </b>
             </p>
             {couponDiscount > 0 ? (
               <p className="coupon-discount">
@@ -205,8 +222,17 @@ export default function CartPage() {
               </p>
             ) : null}
             <div className="cart-payable">
-              <span>مبلغ فعلی</span>
-              <b>{formatPrice(Math.max(0, subtotal - couponDiscount))}</b>
+              <span>مبلغ قابل پرداخت</span>
+              <b>
+                {shippingCost === null
+                  ? "—"
+                  : formatPrice(
+                      Math.max(
+                        0,
+                        subtotal + shippingCost - couponDiscount,
+                      ),
+                    )}
+              </b>
             </div>
             <Link className="primary-btn" href={checkoutHref}>
               ادامه و ثبت سفارش

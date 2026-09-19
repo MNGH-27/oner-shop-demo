@@ -20,17 +20,17 @@ export function SettingsPage() {
     queryKey: ['settings'],
     queryFn: async () => {
       const data = await fetchSettings()
-      setValue(String(data.defaultShippingCost))
+      setValue(String(data.shippingCost))
       return data
     },
   })
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      updateSettings({ defaultShippingCost: Number(value) || 0 }),
+      updateSettings({ shippingCost: Number(value) || 0 }),
     onSuccess: async () => {
       setError(null)
-      toast.success('هزینه ارسال پیش‌فرض ذخیره شد')
+      toast.success('هزینه ارسال هر سفارش ذخیره شد')
       await queryClient.invalidateQueries({ queryKey: ['settings'] })
     },
     onError: (err) => {
@@ -44,7 +44,7 @@ export function SettingsPage() {
   if (settingsQuery.isLoading) return <Spinner />
 
   function submitSettings() {
-    const errors = validationErrors(settingsSchema.safeParse({ defaultShippingCost: value }))
+    const errors = validationErrors(settingsSchema.safeParse({ shippingCost: value }))
     setFieldErrors(errors)
     if (Object.keys(errors).length) return
     saveMutation.mutate()
@@ -54,7 +54,7 @@ export function SettingsPage() {
     <div className="max-w-xl">
       <PageHeader
         title="تنظیمات"
-        description="هزینه ارسال پیش‌فرض هنگام ساخت محصول جدید روی کالا ست می‌شود و بعداً قابل تغییر است."
+        description="این مبلغ فقط یک‌بار به کل هر سفارش اضافه می‌شود؛ مستقل از تعداد و نوع کالاها."
       />
 
       {settingsQuery.isError ? (
@@ -66,11 +66,11 @@ export function SettingsPage() {
       ) : (
         <div className="grid gap-4">
           <div className="rounded-2xl border border-line bg-surface p-5">
-            <Field label="هزینه ارسال پیش‌فرض (تومان)" error={fieldErrors.defaultShippingCost}>
+            <Field label="هزینه ارسال هر سفارش (تومان)" error={fieldErrors.shippingCost}>
               <PriceInput
                 value={value}
                 onValueChange={setValue}
-                aria-invalid={Boolean(fieldErrors.defaultShippingCost)}
+                aria-invalid={Boolean(fieldErrors.shippingCost)}
               />
             </Field>
             {value !== '' ? (

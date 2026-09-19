@@ -11,13 +11,14 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { SearchDialog } from "@components/modules/search/SearchDialog";
 import { getCategoryTree } from "@core/services/api/shop.api";
 import {
   selectCartCount,
   useCartStore,
 } from "@core/services/stores/cart.store";
+import { useAuthStore } from "@core/services/stores/auth.store";
 import type { StoreCategoryNode } from "@core/types/shop.types";
 
 function CategoryItem({
@@ -35,10 +36,7 @@ function CategoryItem({
   if (!hasChildren) {
     return (
       <li>
-        <Link
-          href={`/products?category=${category._id}`}
-          onClick={closeMenu}
-        >
+        <Link href={`/products?category=${category._id}`} onClick={closeMenu}>
           {category.name}
         </Link>
       </li>
@@ -48,10 +46,7 @@ function CategoryItem({
   return (
     <li className={`category-branch ${open ? "open" : ""}`}>
       <div className="category-parent-row">
-        <Link
-          href={`/products?category=${category._id}`}
-          onClick={closeMenu}
-        >
+        <Link href={`/products?category=${category._id}`} onClick={closeMenu}>
           {category.name}
         </Link>
         <button
@@ -60,11 +55,7 @@ function CategoryItem({
           aria-expanded={open}
           aria-label={`نمایش زیرمجموعه‌های ${category.name}`}
         >
-          {depth === 0 ? (
-            <ChevronDown size={14} />
-          ) : (
-            <ChevronLeft size={14} />
-          )}
+          {depth === 0 ? <ChevronDown size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
       <ul className="category-submenu">
@@ -83,14 +74,36 @@ function CategoryItem({
 
 export function SiteHeader() {
   const count = useCartStore(selectCartCount);
+  const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
   const [menu, setMenu] = useState(false);
+  const [categoryMenu, setCategoryMenu] = useState(false);
+  const hydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const [search, setSearch] = useState(false);
+  const categoriesRef = useRef<HTMLDivElement>(null);
   const categories = useQuery({
     queryKey: ["catalog-category-tree"],
     queryFn: getCategoryTree,
     staleTime: 300000,
   });
-  const closeMenu = () => setMenu(false);
+  const closeMenu = () => {
+    setMenu(false);
+    setCategoryMenu(false);
+  };
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!categoriesRef.current?.contains(event.target as Node)) {
+        setCategoryMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, []);
 
   return (
     <>
@@ -122,11 +135,31 @@ export function SiteHeader() {
           <Link href="/products" onClick={closeMenu}>
             فروشگاه
           </Link>
-          <div className="categories-nav">
-            <button type="button">
+          <div
+            ref={categoriesRef}
+            className={`categories-nav ${categoryMenu ? "open" : ""}`}
+          >
+            <button
+              type="button"
+              onClick={() => setCategoryMenu((current) => !current)}
+              aria-expanded={categoryMenu}
+            >
               دسته‌بندی‌ها <ChevronDown size={14} />
             </button>
             <ul className="categories-mega">
+              <li className="category-menu-heading">
+                <div>
+                  <b>دسته‌بندی محصولات</b>
+                  <small>کالای خواب و پوشاک کودک</small>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCategoryMenu(false)}
+                  aria-label="بستن دسته‌بندی‌ها"
+                >
+                  <X size={17} />
+                </button>
+              </li>
               <li className="category-view-all">
                 <Link href="/products" onClick={closeMenu}>
                   مشاهده همه محصولات
@@ -159,8 +192,17 @@ export function SiteHeader() {
           >
             <Search size={19} />
           </button>
-          <Link href="/profile" aria-label="حساب کاربری">
-            <UserRound size={19} />
+          <Link
+            href="/profile"
+            className={`auth-link ${hydrated && token ? "authenticated" : "guest"}`}
+            aria-label={hydrated && token ? "حساب کاربری" : "ورود یا ثبت‌نام"}
+          >
+            <UserRound size={18} />
+            <span>
+              {hydrated && token
+                ? user?.firstName || "حساب من"
+                : "ورود / ثبت‌نام"}
+            </span>
           </Link>
           <Link href="/cart" className="header-cart" aria-label="سبد خرید">
             <ShoppingBag size={18} />

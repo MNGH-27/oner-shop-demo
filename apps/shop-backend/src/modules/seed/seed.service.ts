@@ -50,89 +50,196 @@ export class SeedService implements OnModuleInit {
     this.logger.log(`Default admin created: ${email}`);
   }
   private async demo() {
-    if (await this.prisma.category.count()) return;
+    const freshDatabase = (await this.prisma.category.count()) === 0;
     await this.prisma.setting.upsert({
       where: { key: 'shop' },
       update: {},
       create: { key: 'shop', defaultShippingCost: 50000 },
     });
-    const [electronics, home, fashion] = await Promise.all([
-      this.prisma.category.create({
-        data: {
-          name: 'الکترونیک',
-          description: 'گوشی، لپ‌تاپ و لوازم دیجیتال',
-          image: '/uploads/seed-cat-electronics.jpg',
-        },
+    const syncCategory = async (input: {
+      name: string;
+      legacyNames: string[];
+      description: string;
+      image: string;
+      sortOrder: number;
+    }) => {
+      const candidates = await this.prisma.category.findMany({
+        where: { name: { in: [input.name, ...input.legacyNames] } },
+        orderBy: { createdAt: 'asc' },
+      });
+      const selected =
+        candidates.find((category) => category.name === input.name) ??
+        candidates[0];
+      const target = selected
+        ? await this.prisma.category.update({
+            where: { id: selected.id },
+            data: {
+              name: input.name,
+              description: input.description,
+              image: input.image,
+              sortOrder: input.sortOrder,
+              isActive: true,
+              parentId: null,
+            },
+          })
+        : await this.prisma.category.create({
+            data: {
+              name: input.name,
+              description: input.description,
+              image: input.image,
+              sortOrder: input.sortOrder,
+            },
+          });
+      for (const duplicate of candidates.filter(
+        (category) => category.id !== target.id,
+      )) {
+        await this.prisma.product.updateMany({
+          where: { categoryId: duplicate.id },
+          data: { categoryId: target.id },
+        });
+        await this.prisma.category.updateMany({
+          where: { parentId: duplicate.id },
+          data: { parentId: target.id },
+        });
+        await this.prisma.category.delete({ where: { id: duplicate.id } });
+      }
+      return target;
+    };
+    const [bedding, clothing] = await Promise.all([
+      syncCategory({
+        name: 'کالای خواب کودک',
+        legacyNames: ['الکترونیک', 'خانه و آشپزخانه'],
+        description: 'روانداز، بالش، قنداق و سرویس خواب کودک',
+        image: '/uploads/oner-product-1.jpg',
+        sortOrder: 1,
       }),
-      this.prisma.category.create({
-        data: {
-          name: 'خانه و آشپزخانه',
-          description: 'وسایل منزل',
-          image: '/uploads/seed-cat-home.jpg',
-        },
-      }),
-      this.prisma.category.create({
-        data: {
-          name: 'مد و پوشاک',
-          description: 'لباس و اکسسوری',
-          image: '/uploads/seed-cat-fashion.jpg',
-        },
-      }),
-    ]);
-    const products = await Promise.all([
-      this.prisma.product.create({
-        data: {
-          name: 'هدفون بی‌سیم',
-          description: 'هدفون بلوتوث با نویزکنسلینگ',
-          price: 1850000,
-          shippingCost: 50000,
-          images: ['/uploads/seed-product-1.jpg'],
-          categoryId: electronics.id,
-          stock: 25,
-        },
-      }),
-      this.prisma.product.create({
-        data: {
-          name: 'ماگ سرامیکی',
-          description: 'ماگ ۴۰۰ میلی‌لیتری',
-          price: 189000,
-          shippingCost: 50000,
-          images: ['/uploads/seed-product-2.jpg'],
-          categoryId: home.id,
-          stock: 80,
-        },
-      }),
-      this.prisma.product.create({
-        data: {
-          name: 'تی‌شرت نخی',
-          description: 'تی‌شرت ساده',
-          price: 420000,
-          shippingCost: 50000,
-          images: ['/uploads/seed-product-3.jpg'],
-          categoryId: fashion.id,
-          stock: 40,
-          colors: [{ name: 'سفید' }],
-          sizes: [{ label: 'L' }, { label: 'XL' }],
-          variants: {
-            create: [
-              { color: 'سفید', size: 'L', stock: 20 },
-              { color: 'سفید', size: 'XL', stock: 20 },
-            ],
-          },
-        },
-      }),
-      this.prisma.product.create({
-        data: {
-          name: 'شارژر سریع',
-          description: 'شارژر ۶۵ وات',
-          price: 690000,
-          shippingCost: 50000,
-          images: ['/uploads/seed-product-4.jpg'],
-          categoryId: electronics.id,
-          stock: 55,
-        },
+      syncCategory({
+        name: 'پوشاک و منسوجات کودک',
+        legacyNames: ['مد و پوشاک'],
+        description: 'لباس و منسوجات لطیف مناسب نوزاد و کودک',
+        image: '/uploads/oner-product-2.jpg',
+        sortOrder: 2,
       }),
     ]);
+    const productSpecs = [
+      {
+        name: 'روانداز موسلین چهارلایه',
+        legacyNames: ['هدفون بی‌سیم'],
+        description: 'روانداز سبک و تنفس‌پذیر با چهار لایه پارچه موسلین',
+        price: 890000,
+        images: ['/uploads/oner-product-3.jpg'],
+        categoryId: bedding.id,
+        stock: 24,
+        colors: [],
+        sizes: [{ label: '۱۲۰ × ۸۰' }],
+        sizeType: 'dimension',
+        variants: [],
+      },
+      {
+        name: 'قنداق موسلین نوزاد',
+        legacyNames: ['ماگ سرامیکی'],
+        description: 'قنداق نرم و لطیف برای پوست حساس نوزاد',
+        price: 540000,
+        images: ['/uploads/oner-product-2.jpg'],
+        categoryId: clothing.id,
+        stock: 36,
+        colors: [{ name: 'کرم' }, { name: 'سفید' }],
+        sizes: [{ label: '۰ تا ۶ ماه' }, { label: '۶ تا ۱۲ ماه' }],
+        sizeType: 'letter',
+        variants: [
+          { color: 'کرم', size: '۰ تا ۶ ماه', stock: 9 },
+          { color: 'کرم', size: '۶ تا ۱۲ ماه', stock: 9 },
+          { color: 'سفید', size: '۰ تا ۶ ماه', stock: 9 },
+          { color: 'سفید', size: '۶ تا ۱۲ ماه', stock: 9 },
+        ],
+      },
+      {
+        name: 'ست لباس راحتی نخی کودک',
+        legacyNames: ['تی‌شرت نخی'],
+        description: 'ست نخی سبک و راحت برای استفاده روزمره کودک',
+        price: 620000,
+        images: ['/uploads/oner-product-4.jpg'],
+        categoryId: clothing.id,
+        stock: 28,
+        colors: [{ name: 'شیری' }, { name: 'سبز سدری' }],
+        sizes: [{ label: '۱ تا ۲ سال' }, { label: '۲ تا ۳ سال' }],
+        sizeType: 'letter',
+        variants: [
+          { color: 'شیری', size: '۱ تا ۲ سال', stock: 7 },
+          { color: 'شیری', size: '۲ تا ۳ سال', stock: 7 },
+          { color: 'سبز سدری', size: '۱ تا ۲ سال', stock: 7 },
+          { color: 'سبز سدری', size: '۲ تا ۳ سال', stock: 7 },
+        ],
+      },
+      {
+        name: 'بالش موسلین کودک',
+        legacyNames: ['شارژر سریع'],
+        description: 'بالش لطیف و سبک با رویه موسلین قابل شست‌وشو',
+        price: 490000,
+        images: ['/uploads/oner-product-1.jpg'],
+        categoryId: bedding.id,
+        stock: 32,
+        colors: [],
+        sizes: [{ label: '۴۰ × ۳۰' }],
+        sizeType: 'dimension',
+        variants: [],
+      },
+      {
+        name: 'ست کامل خواب موسلین کودک',
+        legacyNames: [],
+        description:
+          'ست سه‌تکه شامل روانداز، ملحفه کش‌دار و بالش موسلین با طرح گیاهی',
+        price: 2450000,
+        images: [
+          '/uploads/muslin-bedding-main.png',
+          '/uploads/muslin-bedding-flatlay.png',
+          '/uploads/muslin-bedding-detail.png',
+        ],
+        categoryId: bedding.id,
+        stock: 14,
+        colors: [],
+        sizes: [{ label: 'تخت کودک ۱۳۰ × ۷۰' }],
+        sizeType: 'dimension',
+        variants: [],
+      },
+    ];
+    const products = [];
+    for (const spec of productSpecs) {
+      const existing = await this.prisma.product.findFirst({
+        where: { name: { in: [spec.name, ...spec.legacyNames] } },
+      });
+      if (existing) {
+        await this.prisma.productVariant.deleteMany({
+          where: { productId: existing.id },
+        });
+      }
+      const data = {
+        name: spec.name,
+        description: spec.description,
+        price: spec.price,
+        shippingCost: 50000,
+        images: spec.images,
+        categoryId: spec.categoryId,
+        stock: spec.stock,
+        colors: spec.colors,
+        sizes: spec.sizes,
+        sizeType: spec.sizeType,
+        isActive: true,
+        variants: spec.variants.length ? { create: spec.variants } : undefined,
+      };
+      products.push(
+        existing
+          ? await this.prisma.product.update({
+              where: { id: existing.id },
+              data,
+            })
+          : await this.prisma.product.create({ data }),
+      );
+    }
+    if (!freshDatabase) {
+      this.logger.log('Existing demo catalog synchronized');
+      return;
+    }
     const hashed = await bcrypt.hash('Customer@123', 10);
     const customer = await this.prisma.user.create({
       data: {
